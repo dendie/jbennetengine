@@ -1,9 +1,17 @@
 const mysql = require('mysql')
+const dotenv = require('dotenv');
+dotenv.config();
+const port = process.env.DATABASE_PORT || '';
+const host = process.env.MYSQL_HOST || '';
+const user = process.env.MYSQL_NAME || '';
+const password = process.env.MYSQL_PASS || '';
+const database = process.env.MYSQL_DATABASE || '';
+
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'jbennett'
+  host: host,
+  user: user,
+  password: password,
+  database: database
 })
 
 connection.connect((err) => {
@@ -14,7 +22,7 @@ connection.connect((err) => {
 async function createUser (name) {
 
   // SQL query to insert data
-  const insertQuery = 'INSERT INTO user SET ?';
+  const insertQuery = 'INSERT INTO users SET ?';
 
   let result = null;
 
@@ -30,7 +38,7 @@ async function createUser (name) {
 async function getUser (id) {
 
 
-  const selectQuery = 'SELECT * FROM user WHERE id = ?';
+  const selectQuery = 'SELECT * FROM users WHERE user_id = ?';
 
   connection.query(selectQuery, id, (error, results, fields) => {
     if (error) {
