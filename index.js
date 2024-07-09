@@ -1,65 +1,42 @@
+// index.js
+
 const express = require('express');
-const app = express();
+const bodyParser = require('body-parser');
+const mysql = require('mysql');
 const dotenv = require('dotenv');
 dotenv.config();
-const port = process.env.DATABASE_PORT;
-const { createUser, getUsers, getUser } = require('./users/UsersController');
+const port = process.env.DATABASE_PORT || '';
+const host = process.env.MYSQL_HOST || '';
+const user = process.env.MYSQL_USER || '';
+const password = process.env.MYSQL_PASS || '';
+const database = process.env.MYSQL_DATABASE || '';
 
-const myLogger = function (req, res, next) {
-    console.log('LOGGED')
-    next()
-}
+const app = express();
+// const PORT = process.env.PORT || 3000;
 
-app.use(myLogger)
+// Middleware
+app.use(bodyParser.json());
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
+// MySQL Connection
+const db = mysql.createConnection({
+    host: host,
+    user: user,
+    password: password,
+    database: database
 });
 
-app.get('/users', (req, res) => {
-  
-  getUsers(function(err, data) {
-    if (err) {
-      console.log("ERROR", err);
-    } else {
-      res.json(data);
-    }
-  });
-
-})
-
-app.get('/users/:id', (req, res) => {
-  
-  const users = getUser(req.params);
-  res.send(users);
-
-})
-
-app.post('/users/:id', (req, res) => {
-  
-  const users = createUser(req.params, req.body);
-  res.send(users);
-
-})
-
-app.put('/users/:id', (req, res) => {
-
-  const users = updateUser(req.params, req.body);
-  
-  res.send(users);
-
-})
-
-app.delete('/users/:id', (req, res) => {
-
-  const users = deleteUser(req.params);
-  
-  res.send(users);
-  
-})
-
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+// Connect to MySQL
+db.connect((err) => {
+  if (err) {
+    throw err;
+  }
+  console.log('Connected to MySQL database');
 });
 
-module.exports = { app }
+// Routes
+app.use('/users', require('./routes/users'));
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
