@@ -13,6 +13,7 @@ router.get('/', (req, res) => {
 
 // Get user by ID
 router.get('/:id', (req, res) => {
+  console.log('ID', req.params.id);
   let sql = `SELECT * FROM users WHERE user_id = ${req.params.id}`;
   db.query(sql, (err, result) => {
     if (err) throw err;
@@ -22,8 +23,9 @@ router.get('/:id', (req, res) => {
 
 // Create a new user
 router.post('/', (req, res) => {
-  const { username, email } = req.body;
-  let sql = `INSERT INTO users (username, email) VALUES ('${username}', '${email}')`;
+  console.log('BODY', req.body)
+  const { username, email, message } = req.body;
+  let sql = `INSERT INTO users (username, email, message) VALUES ('${username}', '${email}', '${message}')`;
   db.query(sql, (err, result) => {
     if (err) throw err;
     res.json({ message: 'User created', id: result.insertId });
@@ -32,8 +34,8 @@ router.post('/', (req, res) => {
 
 // Update user by ID
 router.put('/:id', (req, res) => {
-  const { username, email } = req.body;
-  let sql = `UPDATE users SET username = '${username}', email = '${email}' WHERE id = ${req.params.id}`;
+  const { username, email, message } = req.body;
+  let sql = `UPDATE users SET username = '${username}', email = '${email}', message = '${message}'  WHERE user_id = ${req.params.id}`;
   db.query(sql, (err, result) => {
     if (err) throw err;
     res.json({ message: 'User updated', id: req.params.id });
@@ -42,7 +44,7 @@ router.put('/:id', (req, res) => {
 
 // Delete user by ID
 router.delete('/:id', (req, res) => {
-  let sql = `DELETE FROM users WHERE id = ${req.params.id}`;
+  let sql = `DELETE FROM users WHERE user_id = ${req.params.id}`;
   db.query(sql, (err, result) => {
     if (err) throw err;
     res.json({ message: 'User deleted', id: req.params.id });
