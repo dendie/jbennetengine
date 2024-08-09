@@ -3,7 +3,7 @@ const ApiResponseJob = require('../models/apiResponseJob');
 const ApiResponseClient = require('../models/apiResponseClient');
 const ApiResponseUser = require('../models/apiResponseUser');
 const ApiResponsePlacement = require('../models/apiResponsePlacement');
-const { callCandidateAPI, callJobsAPI, callClientAPI, callUserAPI } = require('../utils/jobsCall')
+const { callCandidateAPI, callJobsAPI, callClientAPI, callStageAPI, callUserAPI } = require('../utils/jobsCall')
 
 async function cronJobs () {
     try {
@@ -26,6 +26,7 @@ async function cronJobs () {
         await callClientAPI()
         await callCandidateAPI()
         await callUserAPI()
+        await callStageAPI()
         return { message: 'SUCCESS' }
     } catch (err) {
         console.error('Error cron job:', err);
