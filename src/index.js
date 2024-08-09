@@ -1,5 +1,4 @@
 // index.js
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -25,6 +24,8 @@ app.use('/users', require('./routes/users'));
 
 // Routes
 app.use('/recruiter', require('./routes/recruiterflow'));
+
+app.use('/api', require('./routes/api'));
 
 // Global error handling middleware
 app.use((err, req, res, next) => {

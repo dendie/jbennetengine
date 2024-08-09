@@ -24,8 +24,8 @@ router.get('/:id', (req, res) => {
 // Create a new user
 router.post('/', (req, res) => {
   console.log('BODY', req.body)
-  const { username, email, message } = req.body;
-  let sql = `INSERT INTO users (username, email, message) VALUES ('${username}', '${email}', '${message}')`;
+  const { name, email, phone, message } = req.body;
+  let sql = `INSERT INTO users (name, email, phone, message) VALUES ('${name}', '${email}', '${phone}', '${message}')`;
   db.query(sql, (err, result) => {
     if (err) throw err;
     res.json({ message: 'User created', id: result.insertId });
@@ -34,8 +34,8 @@ router.post('/', (req, res) => {
 
 // Update user by ID
 router.put('/:id', (req, res) => {
-  const { username, email, message } = req.body;
-  let sql = `UPDATE users SET username = '${username}', email = '${email}', message = '${message}'  WHERE user_id = ${req.params.id}`;
+  const { name, email, phone, message } = req.body;
+  let sql = `UPDATE users SET name = '${name}', email = '${email}', phone = '${phone}', message = '${message}'  WHERE user_id = ${req.params.id}`;
   db.query(sql, (err, result) => {
     if (err) throw err;
     res.json({ message: 'User updated', id: req.params.id });
