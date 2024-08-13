@@ -1,54 +1,59 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const User = require('../models/apiResponseUserJB');
 
-// Get all users
-router.get('/', (req, res) => {
-  let sql = 'SELECT * FROM users';
-  db.query(sql, (err, results) => {
-    if (err) throw err;
-    res.json(results);
-  });
+// Create (POST) - Add a new user
+router.post('/', async (req, res) => {
+  try {
+    const user = new User(req.body);
+    const savedUser = await user.save();
+    res.status(201).json(savedUser);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 });
 
-// Get user by ID
-router.get('/:id', (req, res) => {
-  console.log('ID', req.params.id);
-  let sql = `SELECT * FROM users WHERE user_id = ${req.params.id}`;
-  db.query(sql, (err, result) => {
-    if (err) throw err;
-    res.json(result[0]);
-  });
+// Read (GET) - Get all users
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
-// Create a new user
-router.post('/', (req, res) => {
-  console.log('BODY', req.body)
-  const { name, email, phone, message } = req.body;
-  let sql = `INSERT INTO users (name, email, phone, message) VALUES ('${name}', '${email}', '${phone}', '${message}')`;
-  db.query(sql, (err, result) => {
-    if (err) throw err;
-    res.json({ message: 'User created', id: result.insertId });
-  });
+// Read (GET) - Get a single user by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
-// Update user by ID
-router.put('/:id', (req, res) => {
-  const { name, email, phone, message } = req.body;
-  let sql = `UPDATE users SET name = '${name}', email = '${email}', phone = '${phone}', message = '${message}'  WHERE user_id = ${req.params.id}`;
-  db.query(sql, (err, result) => {
-    if (err) throw err;
-    res.json({ message: 'User updated', id: req.params.id });
-  });
+// Update (PUT) - Update a user by ID
+router.put('/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 });
 
-// Delete user by ID
-router.delete('/:id', (req, res) => {
-  let sql = `DELETE FROM users WHERE user_id = ${req.params.id}`;
-  db.query(sql, (err, result) => {
-    if (err) throw err;
-    res.json({ message: 'User deleted', id: req.params.id });
-  });
+// Delete (DELETE) - Delete a user by ID
+router.delete('/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ message: 'User deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
-module.exports = router;
+module.exports = router
