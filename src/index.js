@@ -9,15 +9,15 @@ const app = express();
 connectDB();
 
 // Middleware
+app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 // CORS is enabled for the selected origins
 let corsOptions = {
-  origin: [ 'http://localhost:3000', 'http://localhost:3001' ],
+  origin: [ 'http://localhost:3000', 'http://localhost:3001', 'http://entrustdigital-backend.com' , 'https://fe-jbr.vercel.app/'],
   optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions))
-
 
 // Routes
 app.use('/users', require('./routes/users'));

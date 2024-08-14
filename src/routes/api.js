@@ -14,7 +14,7 @@ router.get('/recruiter', async (req, res) => {
 })
 
 router.get('/job-list', async (req, res) => {
-    res.json(await getJobList())
+    res.json(await getJobList(req.query))
 })
 
 router.get('/client-list', async (req, res) => {

@@ -8,13 +8,13 @@ async function getJobList(request) {
         let query = {};
     
         // Add name condition only if the name parameter is not null or undefined
-        if (request.jobs) {
+        if (request && request.jobs) {
             query.name = request.jobs
         }
-        if (request.isOpen) {
+        if (request && request.isOpen) {
             query.is_open = request.isOpen.toLowerCase() === 'true' ? true : request.isOpen.toLowerCase() === 'false' ? false : null
         }
-        if (request.client) {
+        if (request && request.client) {
             query['company.name']= request.client
         }
 
