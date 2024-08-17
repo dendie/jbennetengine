@@ -27,6 +27,8 @@ app.use('/recruiter', require('./routes/recruiterflow'));
 
 app.use('/api', require('./routes/api'));
 
+app.use('/login', require('./routes/login'));
+
 // Global error handling middleware
 app.use((err, req, res, next) => {
   if (!res.headersSent) {
