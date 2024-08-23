@@ -16,7 +16,7 @@ async function fetchLogin (request)
             const result = await user[0].updateOne({ $set: { token: accessToken }});
             console.log('result: ' + result)
             if (result) {
-                return { message: 'Success', token: accessToken }
+                return { message: 'Success', client: user[0].client, token: accessToken }
             } else {
                 return { message: 'Not Allowed' }
             }
@@ -33,7 +33,7 @@ async function storeLogin (request)
 {
     try {
         const hashedPassword = await bcrypt.hash(request.body.password, 10)
-        const user = { user: request.body.user, password: hashedPassword }
+        const user = { user: request.body.user, password: hashedPassword, email: request.body.email, client: request.body.client }
         const apiResponse = new ApiResponseLogin(user);
         await apiResponse.save();
         return { status: 201, message: 'Success' }

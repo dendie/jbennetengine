@@ -9,6 +9,14 @@ const apiResponseLoginSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    email: {
+        type: String,
+        required: true
+    },
+    client: {
+        type: Array,
+        required: true
+    },
     token: {
         type: String,
         required: false

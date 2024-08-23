@@ -4,7 +4,8 @@ const ApiResponseJob = require('../models/apiResponseJob');
 const ApiResponseCandidate = require('../models/apiResponseCandidate');
 const ApiResponseUser = require('../models/apiResponseUser');
 const ApiResponseClient = require('../models/apiResponseClient');
-const ApiResponseStage = require('../models/apiResponseStage')
+const ApiResponseStage = require('../models/apiResponseStage');
+const ApiResponseLocation = require('../models/apiResponseLocations');
 
 // const apiUrl = ; // Replace with the actual API URL
 const headers = {
@@ -162,7 +163,45 @@ const callStageAPI = async () => {
     } catch (error) {
         console.log('Error fetch API:', error.message)
     }
-
 }
 
-module.exports = { callClientAPI, callJobsAPI, callCandidateAPI, callUserAPI, callPlacementAPI, callStageAPI }
+const callLocationAPI = async () => {
+    try {
+        const responseLocation = await axios.get(`${CONST.CONST_URL}/external/location/list`, { headers: headers })
+        const locations = responseLocation.data.data || []
+        for (const location of locations) {
+            if (location.city !== null || location.city !== '') {
+                let formData = {
+                    location_id: location.id,
+                    city: location.city,
+                    country: location.country,
+                    state: location.state,
+                    latitude: location.latitude,
+                    longitude: location.longitude
+                }
+                const apiResponse = new ApiResponseLocation(formData);
+                await apiResponse.save();
+                await callLongLatAPI(location.city)
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching API:', error.message);
+    }
+}
+
+const callLongLatAPI = async (city) => {
+    try {
+        const responseLocation = await axios.get(`https://api.positionstack.com/v1/forward?access_key=6fcc5edd7c2c22ecc10a70e4db5a9e3f&query=${city}&country=US`)
+        const locations = responseLocation.data.data || []
+        if (locations.length > 0) {
+            const result = await ApiResponseLocation.updateOne({ 'city': city }, { $set: { latitude: locations[0].latitude, longitude: locations[0].longitude }})
+            console.log(`Updated ${result.modifiedCount} document(s)`);
+            return result;
+        }
+        console.log('Location not found');
+    } catch (error) {
+        console.error('Error fetching API:', error.message);
+    }
+}
+
+module.exports = { callClientAPI, callJobsAPI, callCandidateAPI, callUserAPI, callPlacementAPI, callStageAPI, callLocationAPI, callLongLatAPI }

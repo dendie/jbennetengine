@@ -2,6 +2,8 @@ const ApiResponseCandidate = require('../models/apiResponseCandidate');
 const ApiResponseJob = require('../models/apiResponseJob');
 const ApiResponseClient = require('../models/apiResponseClient');
 const ApiResponseStage = require('../models/apiResponseStage');
+const ApiResponseLocation = require('../models/apiResponseLocations');
+const { callLongLatAPI } = require('../utils/jobsCall')
 
 async function getJobList(request) {
     try {
@@ -157,20 +159,65 @@ async function getCounterList(request) {
 
 async function getLocations (dataCandidate, dataJobs) {
     let locations = []
-    let setArray = new Set(locations)
+    let setArray = new Set(locations.map(loc => loc.city))
     if (dataCandidate) {
         for (const candidate of dataCandidate) {
             if (candidate.locations[0].city !== null) {
-                setArray.add(candidate.locations[0].city)
+                const responseLocations = await ApiResponseLocation.find({ city: candidate.locations[0].city });
+                // setArray.add(candidate.locations[0].city)
+                const newObject = {
+                    city: candidate.locations[0].city,
+                    state: candidate.locations[0].state,
+                    latitude: responseLocations.latitude,
+                    longitude: responseLocations.longitude
+                }
+                insertUniqueObject(locations, newObject, setArray)
             }
         }
     }
     if (dataJobs) {
         for (const job of dataJobs) {
             if (job.locations !== null) {
-                setArray.add(job.locations)
+                const splitLocation = job.locations.split(', ');
+                const responseLocations = await ApiResponseLocation.find({ city: splitLocation[0] });
+                // setArray.add(job.locations)
+                const newObject = {
+                    city: splitLocation[0],
+                    state: splitLocation[1],
+                    latitude: responseLocations.latitude,
+                    longitude: responseLocations.longitude
+                }
+                insertUniqueObject(locations, newObject, setArray)
             }
         }
+    }
+
+    // Function to insert object if id is not already present
+    function insertUniqueObject(array, obj, setArray) {
+        if (!setArray.has(obj.city)) {
+            array.push(obj);
+            setArray.add(obj); // Add the new city to the set
+        } else {
+            console.log(`Object with city ${obj.city} already exists.`);
+        }
+    }
+
+    locations = Array.from(setArray)
+    const fullLocations = getLongLat(locations);
+    return fullLocations
+}
+
+async function getLongLat (locationsData) {
+    let locations = []
+    let setArray = new Set(locations)
+    for (const loc of locationsData) {
+        const response = await callLongLatAPI(loc.city)
+        const newObject = {
+            ...loc,
+            latitude: response[0].latitude,
+            longitude: response[0].longitude
+        }
+        setArray.add(newObject)
     }
     locations = Array.from(setArray)
     return locations
