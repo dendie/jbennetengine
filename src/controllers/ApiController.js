@@ -9,17 +9,6 @@ async function getJobList(request) {
     try {
         let query = {};
     
-        // Add name condition only if the name parameter is not null or undefined
-        if (request && request.jobs) {
-            query.name = request.jobs
-        }
-        if (request && request.isOpen) {
-            query.is_open = request.isOpen.toLowerCase() === 'true' ? true : request.isOpen.toLowerCase() === 'false' ? false : null
-        }
-        if (request && request.client) {
-            query['company.name']= request.client
-        }
-
         let response
         // Example query: Find all documents
         if (Object.keys(query).length >= 2) {
@@ -28,6 +17,17 @@ async function getJobList(request) {
                 { is_open: request.isOpen && request.isOpen.toLowerCase() === 'false' ? false : true },
                 { 'company.name': request.client }
             ]
+        } else {
+            // Add name condition only if the name parameter is not null or undefined
+            if (request && request.jobs) {
+                query.name = request.jobs
+            }
+            if (request && request.isOpen) {
+                query.is_open = request.isOpen.toLowerCase() === 'true' ? true : request.isOpen.toLowerCase() === 'false' ? false : null
+            }
+            if (request && request.client) {
+                query['company.name']= request.client
+            }
         }
 
         response = ApiResponseJob.find(query);
@@ -160,17 +160,20 @@ async function getCounterList(request) {
 async function getLocations (dataCandidate, dataJobs) {
     let locations = []
     let setArray = new Set(locations.map(loc => loc.city))
+    let counterLocation = 0
     if (dataCandidate) {
         for (const candidate of dataCandidate) {
             if (candidate.locations[0].city !== null) {
                 const responseLocations = await ApiResponseLocation.find({ city: candidate.locations[0].city });
+                console.log(responseLocations)
                 // setArray.add(candidate.locations[0].city)
                 const newObject = {
                     city: candidate.locations[0].city,
                     state: candidate.locations[0].state,
-                    latitude: responseLocations.latitude,
-                    longitude: responseLocations.longitude
+                    latitude: responseLocations[0].latitude,
+                    longitude: responseLocations[0].longitude
                 }
+                if (responseLocations[0].latitude !== '' || responseLocations[0].longitude !== '') { counterLocation++ }
                 insertUniqueObject(locations, newObject, setArray)
             }
         }
@@ -184,9 +187,10 @@ async function getLocations (dataCandidate, dataJobs) {
                 const newObject = {
                     city: splitLocation[0],
                     state: splitLocation[1],
-                    latitude: responseLocations.latitude,
-                    longitude: responseLocations.longitude
+                    latitude: responseLocations[0].latitude,
+                    longitude: responseLocations[0].longitude
                 }
+                if (responseLocations[0].latitude !== '' || responseLocations[0].longitude !== '') { counterLocation++ }
                 insertUniqueObject(locations, newObject, setArray)
             }
         }
@@ -203,9 +207,12 @@ async function getLocations (dataCandidate, dataJobs) {
     }
 
     locations = Array.from(setArray)
-    // return locations
-    const fullLocations = getLongLat(locations);
-    return fullLocations
+    return locations
+    // if (((dataCandidate.length / counterLocation) > 0.8 || (dataJobs.length / counterLocation) > 0.8)) {
+    //     return locations
+    // }
+    // const fullLocations = getLongLat(locations);
+    // return fullLocations
 }
 
 async function getLongLat (locationsData) {
@@ -213,13 +220,15 @@ async function getLongLat (locationsData) {
     let setArray = new Set(locations)
     for (const loc of locationsData) {
         try {
-            const response = await callLongLatAPI(loc.city)
-            const newObject = {
-                ...loc,
-                latitude: response[0].latitude,
-                longitude: response[0].longitude
+            if (loc.city !== '' || loc.city !== 0) {
+                const response = await callLongLatAPI(loc.city)
+                const newObject = {
+                    ...loc,
+                    latitude: (response || response.length > 0) ? response[0].latitude : '0',
+                    longitude: (response || response.length > 0) ? response[0].longitude : '0'
+                }
+                setArray.add(newObject)
             }
-            setArray.add(newObject)
         } catch (error) {
             console.error(`Error retrieving long/lat for ${loc.city}:`, error);
         }
