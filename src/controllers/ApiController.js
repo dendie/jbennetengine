@@ -22,10 +22,10 @@ async function getJobList(request) {
 
         let response
         // Example query: Find all documents
-        if (Object.keys(query).length > 1) {
+        if (Object.keys(query).length >= 2) {
             query.$and = [
                 { name: request.jobs },
-                { is_open: request.isOpen.toLowerCase() === 'true' ? true : request.isOpen.toLowerCase() === 'false' ? false : null },
+                { is_open: request.isOpen && request.isOpen.toLowerCase() === 'false' ? false : true },
                 { 'company.name': request.client }
             ]
         }
@@ -101,10 +101,10 @@ async function getCounterList(request) {
     try {
         let query = {};
     
-        if (Object.keys(request).length > 1) {
+        if (Object.keys(request).length >= 2) {
             query.$and = [
                 { 'jobs.name': request.jobs },
-                { 'jobs.is_open': request.isOpen.toLowerCase() === 'true' ? true : request.isOpen.toLowerCase() === 'false' ? false : null },
+                { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'false' ? false : true },
                 { 'jobs.client_company_name': request.client }
             ]
         } else {
@@ -203,6 +203,7 @@ async function getLocations (dataCandidate, dataJobs) {
     }
 
     locations = Array.from(setArray)
+    // return locations
     const fullLocations = getLongLat(locations);
     return fullLocations
 }
@@ -211,13 +212,17 @@ async function getLongLat (locationsData) {
     let locations = []
     let setArray = new Set(locations)
     for (const loc of locationsData) {
-        const response = await callLongLatAPI(loc.city)
-        const newObject = {
-            ...loc,
-            latitude: response[0].latitude,
-            longitude: response[0].longitude
+        try {
+            const response = await callLongLatAPI(loc.city)
+            const newObject = {
+                ...loc,
+                latitude: response[0].latitude,
+                longitude: response[0].longitude
+            }
+            setArray.add(newObject)
+        } catch (error) {
+            console.error(`Error retrieving long/lat for ${loc.city}:`, error);
         }
-        setArray.add(newObject)
     }
     locations = Array.from(setArray)
     return locations
@@ -227,11 +232,10 @@ async function getDataRecruiter (request) {
     let responseData = {}
     try {
         let query = {};
-
-        if (Object.keys(request).length > 1) {
+        if (Object.keys(request).length >= 2) {
             query.$and = [
                 { 'jobs.name': request.jobs },
-                { 'jobs.is_open': request.isOpen.toLowerCase() === 'true' ? true : request.isOpen.toLowerCase() === 'false' ? false : null },
+                { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'false' ? false : true },
                 { 'jobs.client_company_name': request.client }
             ]
         } else {
