@@ -41,15 +41,15 @@ async function getJobList(request) {
     }
 }
 
-async function getClientList(id) {
+async function getClientList(request) {
     try {
         const query = {};
     
         // Add name condition only if the name parameter is not null or undefined
-        if (id) {
-          query.client_id = id;
+        if (request.client_id) {
+          query.client_id = request.client_id;
         }
-    
+        
         // Example query: Find all documents
         const response = ApiResponseClient.find(query);
         const client = (await response).map(item => {

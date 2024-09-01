@@ -3,6 +3,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const connectDB = require('./config/database');
+const cron = require('node-cron');
+const { cronJobs } = require('./controllers/CronController')
 
 const app = express();
 
@@ -36,6 +38,10 @@ app.use((err, req, res, next) => {
   } else {
     next(err); // Pass to default error handler if headers are already sent
   }
+});
+
+cron.schedule('* 3,6,9,12 * * *', () => {
+  cronJobs()
 });
 
 module.exports = app
