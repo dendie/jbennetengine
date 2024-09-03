@@ -132,7 +132,7 @@ async function getCounterList(request) {
             let response = await getCandidate({ ...query, $or: [ { job_stage: stage }, { 'jobs.stage_name': stage } ] })
             if (stage === 'Hired') {
                 totalHired = response.length           
-            } else if (stage === 'Client Interview' || stage === 'Shortlist Interview') {
+            } else if (stage === 'Shortlist Interview') {
                 totalShortList += response.length
             } else if (stage === 'Recruited') {
                 totalRecruited += response.length
