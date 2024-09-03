@@ -40,8 +40,8 @@ app.use((err, req, res, next) => {
   }
 });
 
-cron.schedule('* 3,6,9,12 * * *', () => {
-  cronJobs()
-});
+// cron.schedule('* 3,6,9,12 * * *', () => {
+//   cronJobs()
+// });
 
 module.exports = app
