@@ -5,6 +5,13 @@ const cors = require('cors');
 const connectDB = require('./config/database');
 const cron = require('node-cron');
 const { cronJobs } = require('./controllers/CronController')
+const { getDataRecruiter } = require('../controllers/ApiController')
+const Redis = require('redis')
+const redisClient = Redis.createClient()
+redisClient.connect()
+redisClient.on('error', (err) => {
+    console.error('Redis error:', err);
+});
 
 const app = express();
 
@@ -40,8 +47,11 @@ app.use((err, req, res, next) => {
   }
 });
 
-// cron.schedule('* 3,6,9,12 * * *', () => {
-//   cronJobs()
-// });
+const task = cron.schedule('5 * * * *', async () => {
+  const response = await getDataRecruiter(req.query)
+  redisClient.set('recruiter', JSON.stringify(response))
+});
+
+task.stop();
 
 module.exports = app

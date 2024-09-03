@@ -12,7 +12,7 @@ async function getJobList(request, isRecruiter) {
         if (!isRecruiter) {
             let query = {};
             // Example query: Find all documents
-            if (Object.keys(request).length >= 2) {
+            if (request && Object.keys(request).length >= 2) {
                 query.$and = [
                     { name: request.jobs },
                     { is_open: request.isOpen && request.isOpen.toLowerCase() === 'false' ? false : true },
@@ -20,13 +20,13 @@ async function getJobList(request, isRecruiter) {
                 ]
             } else {
                 // Add name condition only if the name parameter is not null or undefined
-                if (request && request.jobs) {
+                if (request && request && request.jobs) {
                     query.name = request.jobs
                 }
-                if (request && request.isOpen) {
+                if (request && request && request.isOpen) {
                     query.is_open = request.isOpen.toLowerCase() === 'true' ? true : request.isOpen.toLowerCase() === 'false' ? false : null
                 }
-                if (request && request.client) {
+                if (request && request && request.client) {
                     query['company.name']= request.client
                 }
             }
@@ -104,7 +104,7 @@ async function getCounterList(request) {
     try {
         let query = {};
     
-        if (Object.keys(request).length >= 2) {
+        if (request && Object.keys(request).length >= 2) {
             query.$and = [
                 { 'jobs.name': request.jobs },
                 { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'false' ? false : true },
@@ -112,14 +112,14 @@ async function getCounterList(request) {
             ]
         } else {
             // Add name condition only if the name parameter is not null or undefined
-            if (request.jobs && request.jobs !== '') {
+            if (request && request.jobs && request.jobs !== '') {
                 
                 query['jobs.name'] = request.jobs
             }
-            if (request.isOpen && request.isOpen !== '') {
+            if (request && request.isOpen && request.isOpen !== '') {
                 query['jobs.is_open'] = request.isOpen
             }
-            if (request.client && request.client !== '') {
+            if (request && request.client && request.client !== '') {
                 query['jobs.client_company_name'] = request.client
             }
         }
@@ -165,7 +165,7 @@ async function getLocations (dataCandidate, dataJobs) {
     let setArray = new Set(locations.map(loc => loc.city))
     if (dataCandidate) {
         for (const candidate of dataCandidate) {
-            if (candidate.locations[0].city !== null) {
+            if (candidate.locations[0].city !== null && !setArray.has(candidate.locations[0].city)) {
                 try {
                     const responseLocations = await ApiResponseLocation.find({ city: candidate.locations[0].city });
                     // setArray.add(candidate.locations[0].city)
@@ -182,25 +182,25 @@ async function getLocations (dataCandidate, dataJobs) {
             }
         }
     }
-    if (dataJobs) {
-        for (const job of dataJobs) {
-            if (job.locations !== null) {
-                try {
-                    const responseLocations = await ApiResponseLocation.find({ city: job.locations });
-                    // setArray.add(job.locations)
-                    const newObject = {
-                        city: job.locations,
-                        state: '',
-                        latitude: responseLocations.length > 0 ? responseLocations[0].latitude : '',
-                        longitude: responseLocations.length > 0 ? responseLocations[0].longitude : ''
-                    }
-                    insertUniqueObject(locations, newObject, setArray)
-                } catch (e) {
-                    console.error(`Error retrieving location for city ${job.locations}:`, e);
-                }
-            }
-        }
-    }
+    // if (dataJobs) {
+    //     for (const job of dataJobs) {
+    //         if (job.locations !== null && !setArray.has(job.locations)) {
+    //             try {
+    //                 const responseLocations = await ApiResponseLocation.find({ city: job.locations });
+    //                 // setArray.add(job.locations)
+    //                 const newObject = {
+    //                     city: job.locations,
+    //                     state: '',
+    //                     latitude: responseLocations.length > 0 ? responseLocations[0].latitude : '',
+    //                     longitude: responseLocations.length > 0 ? responseLocations[0].longitude : ''
+    //                 }
+    //                 insertUniqueObject(locations, newObject, setArray)
+    //             } catch (e) {
+    //                 console.error(`Error retrieving location for city ${job.locations}:`, e);
+    //             }
+    //         }
+    //     }
+    // }
 
     // Function to insert object if id is not already present
     function insertUniqueObject(array, obj, setArray) {
@@ -247,7 +247,7 @@ async function getDataRecruiter (request) {
     let responseData = {}
     try {
         let query = {};
-        if (Object.keys(request).length >= 2) {
+        if (request && Object.keys(request).length >= 2) {
             query.$and = [
                 { 'jobs.name': request.jobs },
                 { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'false' ? false : true },
@@ -255,22 +255,24 @@ async function getDataRecruiter (request) {
             ]
         } else {
             // Add name condition only if the name parameter is not null or undefined
-            if (request.jobs && request.jobs !== '') {
+            if (request && request.jobs && request.jobs !== '') {
                 query['jobs.name'] = request.jobs
             }
-            if (request.isOpen && request.isOpen !== '') {
+            if (request && request.isOpen && request.isOpen !== '') {
                 query['jobs.is_open'] = request.isOpen
             }
-            if (request.client && request.client !== '') {
+            if (request && request.client && request.client !== '') {
                 query['jobs.client_company_name'] = request.client
             }
         }
 
         const totalJobs = await getJobList(query, true)
-        const candidate = await getCandidate(query)
         responseData.candidateHired = await getCandidateWithStatus(query)
         responseData.totalJobs = totalJobs.length
-        responseData.locations = await getLocations(candidate, totalJobs)
+        if (request && Object.keys(request).length > 0) {
+            const candidate = await getCandidate(query)
+            responseData.locations = await getLocations(candidate, totalJobs)
+        }
         const counter = await getCounterList(request)
         responseData = {
             ...responseData,

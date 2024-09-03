@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { getClientList, getCounterList, getDataRecruiter, getJobList } = require('../controllers/ApiController')
 const { cronJobs } = require('../controllers/CronController')
 const { callLongLatAPI } = require('../utils/jobsCall')
+const cron = require('node-cron');
 const Redis = require('redis')
 const redisClient = Redis.createClient()
 const DEFAULT_EXPARATIONS = 3600
@@ -12,25 +13,41 @@ redisClient.on('error', (err) => {
     console.error('Redis error:', err);
 });
 
+const task = cron.schedule('*/1 * * * *', async () => {
+    console.log('Running Cron Job');
+    const response = await getDataRecruiter()
+    redisClient.set('recruiter', JSON.stringify(response))
+    console.log('Cron Job completed');
+});
+task.start();
+
 router.get('/cron-job', async (req, res) => {
+    task.stop();
     const response = await cronJobs()
     res.json(response)
 })
 
 router.get('/recruiter', async (req, res) => {
-    if (Object.keys(req.query).length > 0) {
-        const response = await getDataRecruiter(req.query)
-        res.json(response)
-    } else {
-        const recruiter = await redisClient.get('recruiter');
-        if (recruiter != null) {
-            return res.json(JSON.parse(recruiter))
-        } else {
-            console.log('Cache Miss')
-            const response = await getDataRecruiter(req.query)
-            redisClient.set('recruiter', JSON.stringify(response))
-            res.json(response)
-        }
+    // const response = await getDataRecruiter(req.query)
+    // res.json(response)
+    // if (Object.keys(req.query).length > 0) {
+    //     const response = await getDataRecruiter(req.query)
+    //     res.json(response)
+    // } else {
+    //     const recruiter = await redisClient.get('recruiter');
+    //     if (recruiter != null) {
+    //         return res.json(JSON.parse(recruiter))
+    //     }
+    //     // } else {
+    //     //     console.log('Cache Miss')
+    //     //     const response = await getDataRecruiter(req.query)
+    //     //     redisClient.set('recruiter', JSON.stringify(response))
+    //     //     res.json(response)
+    //     // }
+    // }
+    const recruiter = await redisClient.get('recruiter');
+    if (recruiter != null) {
+        return res.json(JSON.parse(recruiter))
     }
 })
 
