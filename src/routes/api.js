@@ -30,24 +30,20 @@ router.get('/cron-job', async (req, res) => {
 router.get('/recruiter', async (req, res) => {
     // const response = await getDataRecruiter(req.query)
     // res.json(response)
-    // if (Object.keys(req.query).length > 0) {
-    //     const response = await getDataRecruiter(req.query)
-    //     res.json(response)
-    // } else {
-    //     const recruiter = await redisClient.get('recruiter');
-    //     if (recruiter != null) {
-    //         return res.json(JSON.parse(recruiter))
-    //     }
+    if (Object.keys(req.query).length > 0) {
+        const response = await getDataRecruiter(req.query)
+        res.json(response)
+    } else {
+        const recruiter = await redisClient.get('recruiter');
+        if (recruiter != null) {
+            return res.json(JSON.parse(recruiter))
+        }
     //     // } else {
     //     //     console.log('Cache Miss')
     //     //     const response = await getDataRecruiter(req.query)
     //     //     redisClient.set('recruiter', JSON.stringify(response))
     //     //     res.json(response)
     //     // }
-    // }
-    const recruiter = await redisClient.get('recruiter');
-    if (recruiter != null) {
-        return res.json(JSON.parse(recruiter))
     }
 })
 
