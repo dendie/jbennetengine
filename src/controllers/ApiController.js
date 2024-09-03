@@ -160,41 +160,37 @@ async function getCounterList(request) {
 async function getLocations (dataCandidate, dataJobs) {
     let locations = []
     let setArray = new Set(locations.map(loc => loc.city))
-    let counterLocation = 0
     if (dataCandidate) {
         for (const candidate of dataCandidate) {
             if (candidate.locations[0].city !== null) {
                 const responseLocations = await ApiResponseLocation.find({ city: candidate.locations[0].city });
-                console.log(responseLocations)
                 // setArray.add(candidate.locations[0].city)
                 const newObject = {
                     city: candidate.locations[0].city,
                     state: candidate.locations[0].state,
-                    latitude: responseLocations[0].latitude,
-                    longitude: responseLocations[0].longitude
+                    latitude: responseLocations.length > 0 && responseLocations[0].latitude,
+                    longitude: responseLocations.length > 0 &&  responseLocations[0].longitude
                 }
-                if (responseLocations[0].latitude !== '' || responseLocations[0].longitude !== '') { counterLocation++ }
                 insertUniqueObject(locations, newObject, setArray)
             }
         }
     }
-    if (dataJobs) {
-        for (const job of dataJobs) {
-            if (job.locations !== null) {
-                const splitLocation = job.locations.split(', ');
-                const responseLocations = await ApiResponseLocation.find({ city: splitLocation[0] });
-                // setArray.add(job.locations)
-                const newObject = {
-                    city: splitLocation[0],
-                    state: splitLocation[1],
-                    latitude: responseLocations[0].latitude,
-                    longitude: responseLocations[0].longitude
-                }
-                if (responseLocations[0].latitude !== '' || responseLocations[0].longitude !== '') { counterLocation++ }
-                insertUniqueObject(locations, newObject, setArray)
-            }
-        }
-    }
+    // if (dataJobs) {
+    //     for (const job of dataJobs) {
+    //         if (job.locations !== null) {
+    //             const splitLocation = job.locations.split(', ');
+    //             const responseLocations = await ApiResponseLocation.find({ city: splitLocation[0] });
+    //             // setArray.add(job.locations)
+    //             const newObject = {
+    //                 city: splitLocation[0],
+    //                 state: splitLocation[1],
+    //                 latitude: responseLocations.length > 0 && responseLocations[0].latitude,
+    //                 longitude: responseLocations.length > 0 && responseLocations[0].longitude
+    //             }
+    //             insertUniqueObject(locations, newObject, setArray)
+    //         }
+    //     }
+    // }
 
     // Function to insert object if id is not already present
     function insertUniqueObject(array, obj, setArray) {
@@ -261,10 +257,10 @@ async function getDataRecruiter (request) {
         }
 
         const totalJobs = await getJobList(request)
-        const candidate = await getCandidate(query)
+        // const candidate = await getCandidate(query)
         responseData.candidateHired = await getCandidateWithStatus(query)
         responseData.totalJobs = totalJobs.length
-        responseData.locations = await getLocations(candidate, totalJobs)
+        // responseData.locations = await getLocations(candidate, totalJobs)
         const counter = await getCounterList(request)
         responseData = {
             ...responseData,
