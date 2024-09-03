@@ -12,6 +12,7 @@
     "mysql-migrations": "^1.0.7",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
+    "redis": "^4.7.0",
     "request": "^2.79.0",
     "sequelize": "^6.37.3",
     "sequelize-cli": "^6.6.2"
@@ -39,7 +40,7 @@
     "dev": "nodemon src/server.js",
     "build": "webpack",
     "prod": "node src/server.js src/cron.js",
-    "start": "node dist/bundle.js",
+    "start": "node dist/bundle.js src/cron.js",
     "cronJob": "node src/cron.js",
     "migrate": "node src/migration.js up",
     "test": "mocha ./test/*.spec.js",
