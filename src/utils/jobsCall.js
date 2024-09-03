@@ -1,5 +1,6 @@
 const axios = require('axios');
 const CONST = require('../constant');
+
 const ApiResponseJob = require('../models/apiResponseJob');
 const ApiResponseCandidate = require('../models/apiResponseCandidate');
 const ApiResponseUser = require('../models/apiResponseUser');
@@ -196,10 +197,9 @@ const callLongLatAPI = async (city) => {
         if (locations.length > 0) {
             const result = await ApiResponseLocation.updateOne({ 'city': city }, { $set: { latitude: locations[0].latitude, longitude: locations[0].longitude }})
             console.log(`Updated ${result.modifiedCount} document(s)`);
-            return locations;
         }
         console.log('Location not found');
-        return false;
+        return locations;
     } catch (error) {
         console.error('Error fetching API:', error.message);
     }
