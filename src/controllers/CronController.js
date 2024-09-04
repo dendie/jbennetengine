@@ -33,7 +33,7 @@ async function cronJobs () {
         // await callUserAPI()
         // await callStageAPI()
         // await callLocationAPI()
-        await updateLocationsCandidate()
+        // await updateLocationsCandidate()
         // await updateLocationsJobs()
         console.log('SUCCESS')
         return { message: 'SUCCESS' }
