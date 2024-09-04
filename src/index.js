@@ -3,8 +3,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const connectDB = require('./config/database');
-const cron = require('node-cron');
-const { cronJobs } = require('./controllers/CronController')
 
 const app = express();
 

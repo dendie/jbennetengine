@@ -7,19 +7,47 @@ const { callLongLatAPI } = require('../utils/jobsCall')
 const cron = require('node-cron');
 const Redis = require('redis')
 const redisClient = Redis.createClient()
-const DEFAULT_EXPARATIONS = 3600
 redisClient.connect()
 redisClient.on('error', (err) => {
     console.error('Redis error:', err);
 });
 
-const task = cron.schedule('*/1 * * * *', async () => {
-    console.log('Running Cron Job');
+const task = cron.schedule('*/10 * * * *', async () => {
+    console.log('Running Redis store');
     const response = await getDataRecruiter()
     redisClient.set('recruiter', JSON.stringify(response))
-    console.log('Cron Job completed');
+    console.log('Redis store completed');
 });
-task.start();
+
+
+cron.schedule('*/15 * * * *', async () => {
+    const recruiter = await redisClient.get('recruiter');
+    if (recruiter != null) {
+        task.stop();
+    }
+});
+
+// cron.schedule('0 0 */2 * *', async () => {
+//     console.log('Running Cron Job');
+//     await cronJobs()
+//     const recruiter = await redisClient.get('recruiter');
+//     if (recruiter != null) {
+//         task.start();
+//     } else {
+//         task.del('recruiter');
+//     }
+//     console.log('Cron Job completed');
+// });
+
+router.get('/redis-start', async (req, res) => {
+    task.start();
+    res.json({ message: 'Cron Job started' })
+})
+
+router.get('/redis-stop', async (req, res) => {
+    task.stop();
+    res.json({ message: 'Cron Job stop' })
+})
 
 router.get('/cron-job', async (req, res) => {
     task.stop();
@@ -28,8 +56,6 @@ router.get('/cron-job', async (req, res) => {
 })
 
 router.get('/recruiter', async (req, res) => {
-    // const response = await getDataRecruiter(req.query)
-    // res.json(response)
     if (Object.keys(req.query).length > 0) {
         const response = await getDataRecruiter(req.query)
         res.json(response)
@@ -38,12 +64,6 @@ router.get('/recruiter', async (req, res) => {
         if (recruiter != null) {
             return res.json(JSON.parse(recruiter))
         }
-    //     // } else {
-    //     //     console.log('Cache Miss')
-    //     //     const response = await getDataRecruiter(req.query)
-    //     //     redisClient.set('recruiter', JSON.stringify(response))
-    //     //     res.json(response)
-    //     // }
     }
 })
 

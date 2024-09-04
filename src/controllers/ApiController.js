@@ -132,15 +132,15 @@ async function getCounterList(request) {
         let totalRecruited = 0
         let totalShortList = 0
         for (const stage of stages) {
-            let response = await getCandidate({ ...query, $or: [ { job_stage: stage }, { 'jobs.stage_name': stage } ] })
+            let candidateResponse = await getCandidate({ ...query, $or: [ { job_stage: stage }, { 'jobs.stage_name': stage } ] })
             if (stage === 'Hired') {
-                totalHired = response.length           
-            } else if (stage === 'Client Interview' || stage === 'Shortlist Interview') {
-                totalShortList += response.length
-            } else if (stage === 'Recruited') {
-                totalRecruited += response.length
+                totalHired = candidateResponse.length           
+            } else if (stage === 'Client Interview' || stage === 'Shortlist Interview' || stage === 'Phone Interview' || stage === 'Recruiting Call' || stage === 'Offer' || stage === 'Considering' || stage === 'LMRC' || stage === 'No Auto' || stage === 'W#' || stage === 'Company Submission') {
+                totalShortList += candidateResponse.length
+            } else if (stage === 'Recruited' || stage === 'Applied') {
+                totalRecruited += candidateResponse.length
             } else {
-                totalCandidate += response.length
+                totalCandidate += candidateResponse.length
             }
         }
         totalShortList += totalHired
@@ -153,8 +153,6 @@ async function getCounterList(request) {
             totalShortList: totalShortList
         }
         return objectCount
-        // const totalHired = getCandidateWithStatus('Hired')
-        // return response
     } catch ( error ) {
         console.error('Error retrieving users:', error);
     }
@@ -165,42 +163,26 @@ async function getLocations (dataCandidate, dataJobs) {
     let setArray = new Set(locations.map(loc => loc.city))
     if (dataCandidate) {
         for (const candidate of dataCandidate) {
-            if (candidate.locations[0].city !== null && !setArray.has(candidate.locations[0].city)) {
-                try {
-                    const responseLocations = await ApiResponseLocation.find({ city: candidate.locations[0].city });
-                    // setArray.add(candidate.locations[0].city)
-                    const newObject = {
-                        city: candidate.locations[0].city,
-                        state: candidate.locations[0].state,
-                        latitude: responseLocations.length > 0 ? responseLocations[0].latitude : '',
-                        longitude: responseLocations.length > 0 ? responseLocations[0].longitude : ''
-                    }
-                    insertUniqueObject(locations, newObject, setArray)
-                } catch (e) {
-                    console.error(`Error retrieving location for city ${candidate.locations[0].city}:`, e);
-                }
+            const newObject = {
+                city: candidate.locations[0].city,
+                state: candidate.locations[0].state,
+                latitude: candidate.locations[0].latitude,
+                longitude: candidate.locations[0].longitude
             }
+            insertUniqueObject(locations, newObject, setArray)
         }
     }
-    // if (dataJobs) {
-    //     for (const job of dataJobs) {
-    //         if (job.locations !== null && !setArray.has(job.locations)) {
-    //             try {
-    //                 const responseLocations = await ApiResponseLocation.find({ city: job.locations });
-    //                 // setArray.add(job.locations)
-    //                 const newObject = {
-    //                     city: job.locations,
-    //                     state: '',
-    //                     latitude: responseLocations.length > 0 ? responseLocations[0].latitude : '',
-    //                     longitude: responseLocations.length > 0 ? responseLocations[0].longitude : ''
-    //                 }
-    //                 insertUniqueObject(locations, newObject, setArray)
-    //             } catch (e) {
-    //                 console.error(`Error retrieving location for city ${job.locations}:`, e);
-    //             }
-    //         }
-    //     }
-    // }
+    if (dataJobs) {
+        for (const job of dataJobs) {
+            const newObject = {
+                city: job.locations.city,
+                state: job.locations.state,
+                latitude: job.locations.latitude,
+                longitude: job.locations.longitude
+            }
+            insertUniqueObject(locations, newObject, setArray)
+        }
+    }
 
     // Function to insert object if id is not already present
     function insertUniqueObject(array, obj, setArray) {
@@ -269,10 +251,8 @@ async function getDataRecruiter (request) {
         const totalJobs = await getJobList(query, true)
         responseData.candidateHired = await getCandidateWithStatus(query)
         responseData.totalJobs = totalJobs.length
-        if (request && Object.keys(request).length > 0) {
-            const candidate = await getCandidate(query)
-            responseData.locations = await getLocations(candidate, totalJobs)
-        }
+        const candidate = await getCandidate(query)
+        responseData.locations = await getLocations(candidate, totalJobs)
         const counter = await getCounterList(request)
         responseData = {
             ...responseData,

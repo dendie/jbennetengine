@@ -95,7 +95,7 @@ const callJobsAPI = async (limit = 100, page = 1, isOpen = 0, accumulatedData = 
         const jobs = response.data.data || []
         accumulatedData = accumulatedData.concat(jobs);
         for (const job of jobs) {
-            let formData = { job_id: job.id, name: job.name, is_open: job.is_open, locations: job.locations, company: job.company }
+            let formData = { job_id: job.id, name: job.name, is_open: job.is_open, locations: { name: job.locations.length > 0 ? job.locations[0] : '', latitude: '', longitude: '' }, company: job.company }
             const apiResponse = new ApiResponseJob(formData);
             await apiResponse.save();
         }

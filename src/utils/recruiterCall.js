@@ -1,6 +1,8 @@
 const axios = require('axios');
 const CONST = require('../constant');
 const ApiResponseCandidate = require('../models/apiResponseCandidate');
+const ApiResponseLocation = require('../models/apiResponseLocations');
+const ApiResponseJob = require('../models/apiResponseJob');
 
 const apiUrl = `${CONST.CONST_URL}/external/candidate/list`; // Replace with the actual API URL
 const headers = {
@@ -24,6 +26,62 @@ const callCandidateAPI = async () => {
         index++;
     } catch (error) {
         console.error('Error fetching API:', error.message);
+    }
+}
+
+const updateLocationsCandidate = async () => {
+    try {
+        const dataCandidate = await ApiResponseCandidate.find();
+        for (const candidate of dataCandidate) {
+            if (candidate.locations[0].city !== null) {
+                try {
+                    const responseLocations = await ApiResponseLocation.find({ city: candidate.locations[0].city })
+                    let newObject = {
+                        ...candidate.locations[0],
+                        latitude: responseLocations.length > 0 && responseLocations[0].latitude,
+                        longitude: responseLocations.length > 0 && responseLocations[0].longitude
+                    }
+                    const result = await candidate.updateOne(
+                        { $set: { locations: newObject } }
+                    );
+                    console.log(`${candidate.name} have been updated successfully.` + result);
+                } catch (error) {
+                    console.error('Error updating candidate:', error);
+                }
+            }
+        }
+        console.log('All users have been updated successfully.');
+    } catch (error) {
+        console.error('Error updating users:', error);
+    }
+}
+
+const updateLocationsJobs = async () => {
+    try {
+        const dataJobs = await ApiResponseJob.find();
+        for (const job of dataJobs) {
+            if (job.locations !== null) {
+                try {
+                    const splitLocation = job.locations[0].name.split(', ');
+                    const responseLocations = await ApiResponseLocation.find({ city: splitLocation[0] });
+                    let newObject = {
+                        city: splitLocation[0],
+                        state: splitLocation[1],
+                        latitude: responseLocations.length > 0 && responseLocations[0].latitude,
+                        longitude: responseLocations.length > 0 && responseLocations[0].longitude
+                    }
+                    const result = await job.updateOne(
+                        { $set: { locations: newObject } }
+                    );
+                    console.log(`${job.name} have been updated successfully.` + result);
+                } catch (error) {
+                    console.error('Error updating jobs:', error);
+                }
+            }
+        }
+        console.log('All jobs have been updated successfully.');
+    } catch (error) {
+        console.error('Error updating jobs:', error);
     }
 }
 
@@ -54,4 +112,4 @@ exports.getTotalProspectCount = async (limit = 100) => {
     return totalCount;
 }
 
-module.exports = callCandidateAPI
+module.exports = { callCandidateAPI, updateLocationsCandidate, updateLocationsJobs }
