@@ -16,7 +16,7 @@ async function fetchLogin (request)
             const result = await user[0].updateOne({ $set: { token: accessToken }});
             console.log('result: ' + result)
             if (result) {
-                return { message: 'Success', client: request.body.user === 'jbennett' ? "[client_id: '0', name: JBennettRecruiting]" : user[0].client, token: accessToken }
+                return { message: 'Success', client: request.body.user === 'jbennett' ? ["[client_id: '0', name: 'JBennettRecruiting']"] : user[0].client, token: accessToken }
             } else {
                 return { message: 'Not Allowed' }
             }
