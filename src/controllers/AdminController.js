@@ -48,6 +48,107 @@ async function updateLogin (request)
     }
 }
 
+// Update Password (Authenticated User)
+async function updatePassword (request)
+{
+    const { currentPassword, newPassword } = request.body;
+    
+    try {
+      const user = await User.findById(request.user.id);
+  
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ msg: 'Current password is incorrect' });
+      }
+  
+      user.password = newPassword;
+      await user.save();
+  
+    //   res.json({ msg: 'Password updated successfully' });
+      return { msg: 'Password updated successfully' };
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send('Server error');
+    }
+};
+  
+  // Forgot Password
+async function forgotPassword (request) {
+    const { email } = request.body;
+  
+    try {
+      const user = await User.findOne({ email });
+  
+      if (!user) {
+        return res.status(404).json({ msg: 'No user found with this email' });
+      }
+  
+      const resetToken = user.getResetPasswordToken();
+      await user.save();
+  
+      const resetUrl = `${request.protocol}://${request.get('host')}/api/users/resetpassword/${resetToken}`;
+  
+      const message = `
+        You are receiving this email because you (or someone else) has requested the reset of a password.
+        Please make a PUT request to: \n\n ${resetUrl}
+      `;
+  
+      // Send email using nodemailer
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+  
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: 'Password Reset Token',
+        text: message,
+      };
+  
+      await transporter.sendMail(mailOptions);
+  
+      res.json({ msg: 'Email sent' });
+    } catch (error) {
+      console.error(error.message);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save();
+      res.status(500).send('Server error');
+    }
+};
+  
+  // Reset Password
+async function resetPassword (request)
+{
+    const resetPasswordToken = crypto.createHash('sha256').update(request.params.token).digest('hex');
+  
+    try {
+      const user = await User.findOne({
+        resetPasswordToken,
+        resetPasswordExpire: { $gt: Date.now() },
+      });
+  
+      if (!user) {
+        return res.status(400).json({ msg: 'Invalid or expired token' });
+      }
+  
+      user.password = req.body.password;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+  
+      await user.save();
+  
+      res.json({ msg: 'Password reset successful' });
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send('Server error');
+    }
+};
+
 async function deleteUser (request)
 {
     try {
@@ -73,14 +174,33 @@ async function getEmailTo ()
 async function setEmailTo (request)
 {
     try {
-        const user = { email: request.body.email };
-        const apiResponse = new ApiResponseSendEmail(user);
-        await apiResponse.save();
-        return { status: 201, message: 'Success' }
+        const isSetEmail = await ApiResponseAdmin.find();
+        if (isSetEmail.length > 0) {
+            const user = { email: request.body.email };
+            const apiResponse = new ApiResponseSendEmail(user);
+            await apiResponse.save();
+            return { status: 201, message: 'Success' }
+        }
+        return { status: 500, message: 'Set email already exists, you can only edit it' }
     } catch (error) {
         console.log(error);
-        return { status: 500 }
+        return { status: 500, message: error.message }
     }
 }
 
-module.exports = { getListUsers, storeLogin, deleteUser, getEmailTo, setEmailTo }
+async function updateEmailTo (request)
+{
+    try {
+        const emails = await ApiResponseSendEmail.findById(request.params.id);
+        const result = await emails.updateOne(
+            { $set: { email: request.body.email } },
+            { new: true }
+        );
+        return { status: 201, message: `Updated ${result.modifiedCount} document(s)` }
+    } catch (error) {
+        console.log(error);
+        return { status: 500, message: error.message }
+    }
+}
+
+module.exports = { getListUsers, storeLogin, deleteUser, getEmailTo, setEmailTo, updateEmailTo }
