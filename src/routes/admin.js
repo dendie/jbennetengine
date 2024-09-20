@@ -1,14 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const { storeLogin, setEmailTo } = require('../controllers/AdminController');
+const { getListUsers, storeLogin, deleteUser, getEmailTo, setEmailTo } = require('../controllers/AdminController');
 
-// router.post('/', async (req, res) => {
-//     const response = await fetchLogin(req)
-//     res.send(response)
-// })
+// Get all users (protected route)
+router.get('/', async (req, res) => {
+    const response = await getListUsers()
+    res.send(response)
+});
+
+// Delete a user (protected route)
+router.delete('/:id', async (req, res) => {
+    const response = await getListUsers()
+    res.send(response)
+});
 
 router.post('/register', async (req, res) => {
     const response = await storeLogin(req)
+    res.send(response)
+})
+
+router.get('/get-email', async (req, res) => {
+    const response = await getEmailTo()
     res.send(response)
 })
 

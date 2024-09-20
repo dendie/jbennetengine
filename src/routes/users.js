@@ -7,8 +7,8 @@ const sendEmail = require('../controllers/SendEmailController');
 // Create (POST) - Add a new user
 router.post('/', async (req, res) => {
   try {
-    // const user = new User(req.body);
-    // const savedUser = await user.save();
+    const user = new User(req.body);
+    const savedUser = await user.save();
     const sentEmail = await SendEmail.find();
     const parametersEmail = { ...req.body, sendTo: sentEmail.email };
     const isSent = await sendEmail(parametersEmail);

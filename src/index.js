@@ -29,6 +29,8 @@ app.use('/api', require('./routes/api'));
 
 app.use('/login', require('./routes/login'));
 
+app.use('/admin', require('./routes/admin'));
+
 // Global error handling middleware
 app.use((err, req, res, next) => {
   if (!res.headersSent) {

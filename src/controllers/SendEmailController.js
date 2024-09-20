@@ -20,10 +20,8 @@ const formattedDate = date.toLocaleDateString('en-US', {
 async function sendEmail (parameters) {
     const params = {
         api_key: "api-2F4563C86A5F4555ADC0456C7EAD5BE3",
-        sender: "backend@entrustdigital-backend.com",
-        to: [
-            "lokassd@gmail.com"
-        ],
+        sender: "backend@jbennettrecruiting.com",
+        to: parameters.sendTo,
         subject: "New message from your website!",
         html_body: `<div>
                         <font size="2">
