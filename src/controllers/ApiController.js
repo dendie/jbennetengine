@@ -15,7 +15,7 @@ async function getJobList(request, isRecruiter) {
             if (request && Object.keys(request).length >= 2) {
                 query.$and = [
                     { name: request.jobs },
-                    { is_open: request.isOpen && request.isOpen.toLowerCase() === 'false' ? false : true },
+                    { is_open: request.isOpen && request.isOpen.toLowerCase() === 'true' ? true : false },
                     { 'company.name': request.client }
                 ]
             } else {
@@ -24,7 +24,7 @@ async function getJobList(request, isRecruiter) {
                     query.name = request.jobs
                 }
                 if (request && request && request.isOpen) {
-                    query.is_open = request.isOpen.toLowerCase() === 'true' ? true : request.isOpen.toLowerCase() === 'false' ? false : null
+                    query.is_open = request.isOpen.toLowerCase() === 'true' ? true : false
                 }
                 if (request && request && request.client) {
                     query['company.name']= request.client
@@ -107,7 +107,7 @@ async function getCounterList(request) {
         if (request && Object.keys(request).length >= 2) {
             query.$and = [
                 { 'jobs.name': request.jobs },
-                { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'false' ? false : true },
+                { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'true' ? true : false },
                 { 'jobs.client_company_name': request.client }
             ]
         } else {
@@ -117,7 +117,7 @@ async function getCounterList(request) {
                 query['jobs.name'] = request.jobs
             }
             if (request && request.isOpen && request.isOpen !== '') {
-                query['jobs.is_open'] = request.isOpen
+                query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
             }
             if (request && request.client && request.client !== '') {
                 query['jobs.client_company_name'] = request.client
@@ -232,7 +232,7 @@ async function getDataRecruiter (request) {
         if (request && Object.keys(request).length >= 2) {
             query.$and = [
                 { 'jobs.name': request.jobs },
-                { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'false' ? false : true },
+                { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'true' ? true : false },
                 { 'jobs.client_company_name': request.client }
             ]
         } else {
@@ -241,7 +241,7 @@ async function getDataRecruiter (request) {
                 query['jobs.name'] = request.jobs
             }
             if (request && request.isOpen && request.isOpen !== '') {
-                query['jobs.is_open'] = request.isOpen
+                query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
             }
             if (request && request.client && request.client !== '') {
                 query['jobs.client_company_name'] = request.client
