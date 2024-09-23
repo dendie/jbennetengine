@@ -174,8 +174,8 @@ async function getEmailTo ()
 async function setEmailTo (request)
 {
     try {
-        const isSetEmail = await ApiResponseAdmin.find();
-        if (isSetEmail.length > 0) {
+        const isSetEmail = await ApiResponseSendEmail.find();
+        if (isSetEmail.length === 0) {
             const user = { email: request.body.email };
             const apiResponse = new ApiResponseSendEmail(user);
             await apiResponse.save();
