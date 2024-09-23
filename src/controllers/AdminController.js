@@ -18,20 +18,20 @@ async function getListUsers (req, res)
 
 async function storeLogin (request)
 {
-    const { user, email, password, client } = request.body;
-    try {
-        let dataUser = await ApiResponseAdmin.findOne({ email });
-        if (dataUser) {
-            return res.status(400).json({ msg: 'User already exists' });
-        }
-        const hashedPassword = await bcrypt.hash(password, 10)
-        const apiResponse = new ApiResponseAdmin({ user, email, hashedPassword, client });
-        await apiResponse.save();
-        return { status: 201, message: 'User registered successfully' }
-    } catch (error) {
-        console.log(error);
-        return { status: 500 }
-    }
+  const { user, email, password, client } = request.body;
+  try {
+      let dataUser = await ApiResponseAdmin.findOne({ email });
+      if (dataUser) {
+          return res.status(400).json({ msg: 'User already exists' });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10)
+      const apiResponse = new ApiResponseAdmin({ user: user, email: email, password: hashedPassword, client: client });
+      await apiResponse.save();
+      return { status: 201, message: 'User registered successfully' }
+  } catch (error) {
+      console.log(error);
+      return { status: 500 }
+  }
 }
 
 async function updateLogin (request)
