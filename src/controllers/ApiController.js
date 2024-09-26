@@ -7,7 +7,6 @@ const { callLongLatAPI } = require('../utils/jobsCall')
 
 async function getJobList(request, isRecruiter) {
     try {
-        
         let response
         if (!isRecruiter) {
             let query = {};
@@ -15,7 +14,8 @@ async function getJobList(request, isRecruiter) {
             if (request && Object.keys(request).length >= 2) {
                 query.$and = [
                     { name: request.jobs },
-                    { is_open: request.isOpen && request.isOpen.toLowerCase() === 'true' ? true : false },
+                    // { is_open: (request.isOpen && request.isOpen.toLowerCase() === 'true') ? true : false },
+                    request.isOpen && request.isOpen.toLowerCase() === 'true' ? { is_open: true } : { job_stages: 'Hired' },
                     { 'company.name': request.client }
                 ]
             } else {
@@ -24,19 +24,20 @@ async function getJobList(request, isRecruiter) {
                     query.name = request.jobs
                 }
                 if (request && request && request.isOpen) {
-                    query.is_open = request.isOpen.toLowerCase() === 'true' ? true : false
+                    // query.is_open = request.isOpen.toLowerCase() === 'true' ? true : false
+                    request.isOpen.toLowerCase() === 'true' ? query.is_open = true : query.job_stages = 'Hired'
                 }
                 if (request && request && request.client) {
                     query['company.name']= request.client
                 }
             }
-
+            console.log('query', query)
             response = await ApiResponseJob.find(query);
         } else {
             response = await ApiResponseJob.find(request);
         }
         const jobs = response.map(item => {
-            return { id: item.job_id, name: item.name, locations: item.locations[0] }
+            return { id: item.job_id, name: item.name, locations: item.locations[0], is_open: item.is_open }
         })
         return jobs
     } catch ( error ) {
@@ -72,11 +73,11 @@ async function getCandidateWithStatus(query) {
         if (query) {
             locQuery = { 
                 ...query,
-                $or: [ { job_stage: 'Hired' }, { 'jobs.stage_name': 'Hired' } ]
+                $or: [ { job_stages: 'Hired' }, { 'jobs.stage_name': 'Hired' } ]
             };
         } else {
             locQuery = {
-                $or: [ { job_stage: 'Hired' }, { 'jobs.stage_name': 'Hired' } ]
+                $or: [ { job_stages: 'Hired' }, { 'jobs.stage_name': 'Hired' } ]
             };
         }
         // Example query: Find all documents
@@ -107,7 +108,8 @@ async function getCounterList(request) {
         if (request && Object.keys(request).length >= 2) {
             query.$and = [
                 { 'jobs.name': request.jobs },
-                { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'true' ? true : false },
+                // { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'true' ? true : false },
+                request.isOpen && request.isOpen.toLowerCase() === 'true' ? { 'jobs.is_open': true } : { job_stages: 'Hired' },
                 { 'jobs.client_company_name': request.client }
             ]
         } else {
@@ -117,7 +119,8 @@ async function getCounterList(request) {
                 query['jobs.name'] = request.jobs
             }
             if (request && request.isOpen && request.isOpen !== '') {
-                query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
+                // query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
+                request.isOpen.toLowerCase() === 'true' ? query['jobs.is_open'] = true : query['job_stages'] = 'Hired'
             }
             if (request && request.client && request.client !== '') {
                 query['jobs.client_company_name'] = request.client
@@ -126,18 +129,18 @@ async function getCounterList(request) {
 
         // Example query: Find all documents
         const response = await ApiResponseStage.find();
-        const stages = response[0].stages
+        const stages = [ ...response[0].stages, 'false' ]
         let totalCandidate = 0
         let totalHired = 0
         let totalRecruited = 0
         let totalShortList = 0
         for (const stage of stages) {
-            let candidateResponse = await getCandidate({ ...query, $or: [ { job_stage: stage }, { 'jobs.stage_name': stage } ] })
+            let candidateResponse = await getCandidate({ ...query, $or: [ { job_stages: stage.toString() }, { 'jobs.stage_name': stage.toString() } ] })
             if (stage === 'Hired') {
                 totalHired = candidateResponse.length           
-            } else if (stage === 'Client Interview' || stage === 'Shortlist Interview' || stage === 'Phone Interview' || stage === 'Recruiting Call' || stage === 'Offer' || stage === 'Considering' || stage === 'LMRC' || stage === 'No Auto' || stage === 'W#' || stage === 'Company Submission') {
+            } else if (stage === 'Client Interview' ||  stage === 'Offer' || stage === 'Shortlist Interview') {
                 totalShortList += candidateResponse.length
-            } else if (stage === 'Recruited' || stage === 'Applied') {
+            } else if (stage === 'Recruited' || stage === 'Recruiting Call') {
                 totalRecruited += candidateResponse.length
             } else {
                 totalCandidate += candidateResponse.length
@@ -232,7 +235,8 @@ async function getDataRecruiter (request) {
         if (request && Object.keys(request).length >= 2) {
             query.$and = [
                 { 'jobs.name': request.jobs },
-                { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'true' ? true : false },
+                // { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'true' ? true : false },
+                request.isOpen && request.isOpen.toLowerCase() === 'true' ? { 'jobs.is_open': true } : { job_stages: 'Hired' },
                 { 'jobs.client_company_name': request.client }
             ]
         } else {
@@ -241,14 +245,15 @@ async function getDataRecruiter (request) {
                 query['jobs.name'] = request.jobs
             }
             if (request && request.isOpen && request.isOpen !== '') {
-                query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
+                // query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
+                request.isOpen && request.isOpen.toLowerCase() === 'true' ? { 'jobs.is_open': true } : { job_stages: 'Hired' }
             }
             if (request && request.client && request.client !== '') {
                 query['jobs.client_company_name'] = request.client
             }
         }
 
-        const totalJobs = await getJobList(query, true)
+        const totalJobs = await getJobList(request, false)
         responseData.candidateHired = await getCandidateWithStatus(query)
         responseData.totalJobs = totalJobs.length
         const candidate = await getCandidate(query)
