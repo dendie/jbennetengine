@@ -54,9 +54,9 @@ async function getClientList(request) {
         }
         
         // Example query: Find all documents
-        const response = ApiResponseClient.find(query);
+        const response = await ApiResponseClient.find(query);
         const client = (await response).map(item => {
-            return item
+            return { id: item.client_id, name: item.name }
         })
         return client
     } catch ( error ) {

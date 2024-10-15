@@ -4,7 +4,7 @@ const { getListUsers, storeLogin, deleteUser, getEmailTo, setEmailTo, updateEmai
 
 // Get all users (protected route)
 router.get('/', async (req, res) => {
-    const response = await getListUsers()
+    const response = await getListUsers(req)
     res.send(response)
 });
 

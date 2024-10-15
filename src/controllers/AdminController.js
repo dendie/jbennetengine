@@ -7,13 +7,27 @@ const ApiResponseSendEmail = require('../models/apiResponseSendEmail');
 
 async function getListUsers (req, res)
 {
-    try {
-        const users = await ApiResponseAdmin.find();
-        return users
-    } catch (error) {
-        console.log(error);
-        return { status: 500 }
+  try {
+    const page = parseInt(req.query.page) || 1; // Default to page 1
+    const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page
+
+    const skip = (page - 1) * limit; // Calculate the number of documents to skip
+    const users = await ApiResponseAdmin.find().skip(skip).limit(limit);
+    console.log(users);
+    // Get the total count of items in the collection
+    const totalItems = await ApiResponseAdmin.countDocuments();
+    // return users
+    return {
+      page,
+      limit,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      users
     }
+  } catch (error) {
+      console.log(error);
+      return { status: 500, error: 'Failed to fetch items' }
+  }
 }
 
 async function storeLogin (request)
