@@ -24,9 +24,11 @@ const callClientAPI = async (limit = 100, page = 1, accumulatedData = []) => {
         const clients = response.data.data || []
         accumulatedData = accumulatedData.concat(clients);
         for (const client of clients) {
-            let formData = { client_id: client.id, name: client.name, locations: client.location.city, closed_jobs: client.closed_jobs, open_jobs: client.open_jobs }
-            const apiResponse = new ApiResponseClient(formData);
-            await apiResponse.save();
+            if (client.closed_jobs.length > 0 || client.open_jobs.length > 0) {
+                let formData = { client_id: client.id, name: client.name, locations: client.location.city, closed_jobs: client.closed_jobs, open_jobs: client.open_jobs }
+                const apiResponse = new ApiResponseClient(formData);
+                await apiResponse.save();
+            }
         }
         if (clients.length === limit) {
             // There might be more data, fetch the next page

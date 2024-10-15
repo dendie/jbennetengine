@@ -31,7 +31,6 @@ async function getJobList(request, isRecruiter) {
                     query['company.name']= request.client
                 }
             }
-            console.log('query', query)
             response = await ApiResponseJob.find(query);
         } else {
             response = await ApiResponseJob.find(request);
@@ -57,7 +56,7 @@ async function getClientList(request) {
         // Example query: Find all documents
         const response = ApiResponseClient.find(query);
         const client = (await response).map(item => {
-            return { id: item.client_id, name: item.name }
+            return item
         })
         return client
     } catch ( error ) {
@@ -84,10 +83,13 @@ async function getCandidateWithStatus(query) {
         const response = await ApiResponseCandidate.find(locQuery);
         let candidates = []
         for (res of response) {
+            let job_name = res.jobs.filter((job) => {
+                return job.stage_name === 'Hired'
+            })
             candidates.push({
                 start_date: res.join_date,
                 name: res.name,
-                job_name: res.jobs[0].title
+                job_name: job_name.title
             })
         }
         return candidates
