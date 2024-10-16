@@ -259,7 +259,7 @@ async function getDataRecruiter (request) {
         }
 
         const totalJobs = await getJobList(request, false)
-        responseData.candidateHired = await getCandidateWithStatus(query, request.client)
+        responseData.candidateHired = await getCandidateWithStatus(query, request?.client)
         responseData.totalJobs = totalJobs.length
         const candidate = await getCandidate(query)
         responseData.locations = await getLocations(candidate, totalJobs)

@@ -11,6 +11,6 @@ const apiResponseEmail = new mongoose.Schema({
     }
 });
 
-const ApiResponse = mongoose.model('email', apiResponseEmail);
+const ApiResponse = mongoose.model('emails', apiResponseEmail);
 
 module.exports = ApiResponse;

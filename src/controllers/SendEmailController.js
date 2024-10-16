@@ -21,7 +21,7 @@ async function sendEmail (parameters) {
     const params = {
         api_key: "api-93D1A03E55FE4E7EB724F5FDDAF5AC56",
         sender: "backend@jbennettrecruiting.com",
-        to: parameters.sendTo,
+        to: ["eva@jbennettrecruiting.com"],
         subject: "New message from your website!",
         html_body: `<div>
                         <font size="2">
