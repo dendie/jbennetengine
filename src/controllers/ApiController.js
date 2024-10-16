@@ -64,33 +64,36 @@ async function getClientList(request) {
     }
 }
 
-async function getCandidateWithStatus(query) {
+async function getCandidateWithStatus(query, client) {
     try {
-        let locQuery = {};
+        // let locQuery = {};
     
-        // Add name condition only if the name parameter is not null or undefined
-        if (query) {
-            locQuery = { 
-                ...query,
-                $or: [ { job_stages: 'Hired' }, { 'jobs.stage_name': 'Hired' } ]
-            };
-        } else {
-            locQuery = {
-                $or: [ { job_stages: 'Hired' }, { 'jobs.stage_name': 'Hired' } ]
-            };
-        }
+        // if (query) {
+        //     locQuery = { 
+        //         ...query,
+        //         $or: [ { job_stages: 'Hired' }, { 'jobs.stage_name': 'Hired' } ]
+        //     };
+        // } else {
+        //     locQuery = {
+        //         $or: [ { job_stages: 'Hired' }, { 'jobs.stage_name': 'Hired' } ]
+        //     };
+        // }
         // Example query: Find all documents
-        const response = await ApiResponseCandidate.find(locQuery);
+        const response = await ApiResponseCandidate.find(query);
         let candidates = []
         for (res of response) {
-            let job_name = res.jobs.filter((job) => {
+            let filteredJobs = res.jobs.filter((job) => {
                 return job.stage_name === 'Hired'
             })
-            candidates.push({
-                start_date: res.join_date,
-                name: res.name,
-                job_name: job_name.title
-            })
+
+            if (filteredJobs.length > 0 && (filteredJobs[0].client_company_name === client)) {
+                let filterDate = filteredJobs.length > 0 ? filteredJobs[0].stage_moved.split('T')[0] : null;
+                candidates.push({
+                    start_date: res.join_date || filterDate,
+                    name: res.name,
+                    job_name: filteredJobs[0].title
+                })
+            }
         }
         return candidates
     } catch ( error ) {
@@ -256,14 +259,14 @@ async function getDataRecruiter (request) {
         }
 
         const totalJobs = await getJobList(request, false)
-        responseData.candidateHired = await getCandidateWithStatus(query)
+        responseData.candidateHired = await getCandidateWithStatus(query, request.client)
         responseData.totalJobs = totalJobs.length
         const candidate = await getCandidate(query)
         responseData.locations = await getLocations(candidate, totalJobs)
         const counter = await getCounterList(request)
         responseData = {
             ...responseData,
-            ...counter
+            // ...counter
         }
         return responseData
     } catch ( error ) {
