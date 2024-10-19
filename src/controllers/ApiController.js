@@ -8,33 +8,27 @@ const { callLongLatAPI } = require('../utils/jobsCall')
 async function getJobList(request, isRecruiter) {
     try {
         let response
-        if (!isRecruiter) {
-            let query = {};
-            // Example query: Find all documents
-            if (request && Object.keys(request).length >= 2) {
-                query.$and = [
-                    { name: request.jobs },
-                    // { is_open: (request.isOpen && request.isOpen.toLowerCase() === 'true') ? true : false },
-                    request.isOpen && request.isOpen.toLowerCase() === 'true' ? { is_open: true } : { job_stages: 'Hired' },
-                    { 'company.name': request.client }
-                ]
-            } else {
-                // Add name condition only if the name parameter is not null or undefined
-                if (request && request && request.jobs) {
-                    query.name = request.jobs
-                }
-                if (request && request && request.isOpen) {
-                    // query.is_open = request.isOpen.toLowerCase() === 'true' ? true : false
-                    request.isOpen.toLowerCase() === 'true' ? query.is_open = true : query.job_stages = 'Hired'
-                }
-                if (request && request && request.client) {
-                    query['company.name']= request.client
-                }
-            }
-            response = await ApiResponseJob.find(query);
-        } else {
-            response = await ApiResponseJob.find(request);
+        let query = {};
+        let listQuery = {}
+        if (request && request.jobs && request.jobs !== '') {
+            listQuery['name'] = request.jobs
         }
+        if (request && request.isOpen && request.isOpen !== '') {
+            // query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
+            request.isOpen.toLowerCase() === 'true' && (listQuery['is_open'] = true)
+        }
+        if (request && request.client && request.client !== '') {
+            listQuery['company.name'] = request.client
+        }
+        if (request && Object.keys(request).length >= 2) {
+            query.$and = [
+                listQuery
+            ]
+        } else {
+            // Add name condition only if the name parameter is not null or undefined
+            query = listQuery 
+        }
+        response = await ApiResponseJob.find(query);
         const jobs = response.map(item => {
             return { id: item.job_id, name: item.name, locations: item.locations[0], is_open: item.is_open }
         })
@@ -109,27 +103,24 @@ async function getCandidate (query) {
 async function getCounterList(request) {
     try {
         let query = {};
-    
+        let listQuery = {}
+        if (request && request.jobs && request.jobs !== '') {
+            listQuery['jobs.name'] = request.jobs
+        }
+        if (request && request.isOpen && request.isOpen !== '') {
+            // query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
+            request.isOpen.toLowerCase() === 'true' ? listQuery['jobs.is_open'] = true : listQuery['job_stages'] = 'Hired'
+        }
+        if (request && request.client && request.client !== '') {
+            listQuery['jobs.client_company_name'] = request.client
+        }
         if (request && Object.keys(request).length >= 2) {
             query.$and = [
-                { 'jobs.name': request.jobs },
-                // { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'true' ? true : false },
-                request.isOpen && request.isOpen.toLowerCase() === 'true' ? { 'jobs.is_open': true } : { job_stages: 'Hired' },
-                { 'jobs.client_company_name': request.client }
+                listQuery
             ]
         } else {
             // Add name condition only if the name parameter is not null or undefined
-            if (request && request.jobs && request.jobs !== '') {
-                
-                query['jobs.name'] = request.jobs
-            }
-            if (request && request.isOpen && request.isOpen !== '') {
-                // query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
-                request.isOpen.toLowerCase() === 'true' ? query['jobs.is_open'] = true : query['job_stages'] = 'Hired'
-            }
-            if (request && request.client && request.client !== '') {
-                query['jobs.client_company_name'] = request.client
-            }
+           query = listQuery 
         }
 
         // Example query: Find all documents
@@ -237,27 +228,25 @@ async function getDataRecruiter (request) {
     let responseData = {}
     try {
         let query = {};
+        let listQuery = {};
+        if (request && request.jobs && request.jobs !== '') {
+            listQuery['jobs.name'] = request.jobs
+        }
+        if (request && request.isOpen && request.isOpen !== '') {
+            // query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
+            request.isOpen.toLowerCase() === 'true' ? listQuery['jobs.is_open'] = true : listQuery['job_stages'] = 'Hired'
+        }
+        if (request && request.client && request.client !== '') {
+            listQuery['jobs.client_company_name'] = request.client
+        }
         if (request && Object.keys(request).length >= 2) {
             query.$and = [
-                { 'jobs.name': request.jobs },
-                // { 'jobs.is_open': request.isOpen && request.isOpen.toLowerCase() === 'true' ? true : false },
-                request.isOpen && request.isOpen.toLowerCase() === 'true' ? { 'jobs.is_open': true } : { job_stages: 'Hired' },
-                { 'jobs.client_company_name': request.client }
+                listQuery
             ]
         } else {
             // Add name condition only if the name parameter is not null or undefined
-            if (request && request.jobs && request.jobs !== '') {
-                query['jobs.name'] = request.jobs
-            }
-            if (request && request.isOpen && request.isOpen !== '') {
-                // query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
-                request.isOpen && request.isOpen.toLowerCase() === 'true' ? { 'jobs.is_open': true } : { job_stages: 'Hired' }
-            }
-            if (request && request.client && request.client !== '') {
-                query['jobs.client_company_name'] = request.client
-            }
+           query = listQuery 
         }
-
         const totalJobs = await getJobList(request, false)
         responseData.candidateHired = await getCandidateWithStatus(query, request?.client)
         responseData.totalJobs = totalJobs.length
@@ -266,7 +255,7 @@ async function getDataRecruiter (request) {
         const counter = await getCounterList(request)
         responseData = {
             ...responseData,
-            // ...counter
+            ...counter
         }
         return responseData
     } catch ( error ) {
