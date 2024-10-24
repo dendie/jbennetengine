@@ -40,19 +40,40 @@ async function getJobList(request, isRecruiter) {
 
 async function getClientList(request) {
     try {
-        const query = {};
+        let query = {};
+        const page = parseInt(request.page) || 1; // Default to page 1
+        const limit = parseInt(request.limit) || 10; // Default to 10 items per page
+        const searchQuery = request.search || '';
+        const skip = (page - 1) * limit; // Calculate the number of documents to skip
+        const searchCondition = searchQuery ? { name: { $regex: searchQuery.trim(), $options: 'i' } } : {};
     
         // Add name condition only if the name parameter is not null or undefined
         if (request.client_id) {
           query.client_id = request.client_id;
         }
-        
+
+        const clone = JSON.parse(JSON.stringify(searchCondition));
+
+        query = {
+            ...query,
+            ...clone
+        }
+
         // Example query: Find all documents
-        const response = await ApiResponseClient.find(query);
+        const response = await ApiResponseClient.find(query).skip(skip).limit(limit);
         const client = (await response).map(item => {
             return { id: item.client_id, name: item.name }
         })
-        return client
+        // Get the total count of items in the collection
+        const totalItems = await ApiResponseClient.countDocuments();
+
+        return {
+            page,
+            limit,
+            totalItems,
+            totalPages: Math.ceil(totalItems / limit),
+            client
+        }
     } catch ( error ) {
         console.error('Error retrieving users:', error);
     }

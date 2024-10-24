@@ -14,7 +14,7 @@ async function getListUsers (req, res)
 
     const skip = (page - 1) * limit; // Calculate the number of documents to skip
 
-    const searchCondition = searchQuery ? { $or: [{ user: { $regex: searchQuery } }, { email: { $regex: searchQuery } }, { 'client.name': { $regex: searchQuery } }] } : {};
+    const searchCondition = searchQuery ? { $or: [{ user: { $regex: searchQuery.trim(), $options: 'i' } }, { email: { $regex: searchQuery.trim(), $options: 'i' } }, { 'client.name': { $regex: searchQuery.trim(), $options: 'i' } }] } : {};
     
     const users = await ApiResponseAdmin.find(searchCondition).skip(skip).limit(limit);
     // Get the total count of items in the collection
