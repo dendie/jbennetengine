@@ -10,7 +10,7 @@ router.post('/', async (req, res) => {
     const user = new User(req.body);
     const savedUser = await user.save();
     const sentEmail = await SendEmail.find();
-    const parametersEmail = { ...req.body, sendTo: sentEmail.email };
+    const parametersEmail = await { ...req.body, sendTo: sentEmail[0].email[0] };
     const isSent = await sendEmail(parametersEmail);
     console.log('Email is sent: ' + isSent);
     res.status(201).json(savedUser);
