@@ -18,7 +18,7 @@ async function getListUsers (req, res)
     
     const users = await ApiResponseAdmin.find(searchCondition).skip(skip).limit(limit);
     // Get the total count of items in the collection
-    const totalItems = await ApiResponseAdmin.countDocuments();
+    const totalItems = users.length;
     // return users
     return {
       page,

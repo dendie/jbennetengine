@@ -65,7 +65,7 @@ async function getClientList(request) {
             return { id: item.client_id, name: item.name }
         })
         // Get the total count of items in the collection
-        const totalItems = await ApiResponseClient.countDocuments();
+        const totalItems = client.length;
 
         return {
             page,
