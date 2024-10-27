@@ -6,7 +6,22 @@ const ApiResponseLocation = require('../models/apiResponseLocations');
 const { callLongLatAPI } = require('../utils/jobsCall');
 const jwt = require('jsonwebtoken');
 
-async function getJobList(request, isRecruiter) {
+async function getJobList(request, data = []) {
+    try {
+        if (request && request.length > 0 && (request.isOpen.toLowerCase() === false || request.isOpen.toLowerCase() === 'placed')) {
+            let response = await data.map((item) => {
+                return { id: item.job_id, name: item.name, locations: item.locations, is_open: item.is_open }
+            })
+            return response;
+        } else {
+            return await getJobs(request);
+        }
+    } catch ( error ) {
+        console.error('Error retrieving users:', error);
+    }
+}
+
+async function getJobs (request) {
     try {
         let response
         let query = {};
@@ -16,7 +31,8 @@ async function getJobList(request, isRecruiter) {
         }
         if (request && request.isOpen && request.isOpen !== '') {
             // query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
-            listQuery['is_open'] = request.isOpen.toLowerCase() === 'open' || request.isOpen.toLowerCase() === "true"
+            // listQuery['is_open'] = request.isOpen.toLowerCase() === 'open' || request.isOpen.toLowerCase() === "true"
+            request.isOpen.toLowerCase() === 'true' || request.isOpen.toLowerCase() === 'open' ? listQuery['jobs.is_open'] = true : listQuery['job_stages'] = 'Hired'
         }
         if (request && request.client && request.client !== '') {
             listQuery['company.name'] = request.client
@@ -86,18 +102,6 @@ async function getCandidateWithStatus(query, req) {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1];
         const decoded = jwt.decode(token);
-        // let locQuery = {};
-    
-        // if (query) {
-        //     locQuery = { 
-        //         ...query,
-        //         $or: [ { job_stages: 'Hired' }, { 'jobs.stage_name': 'Hired' } ]
-        //     };
-        // } else {
-        //     locQuery = {
-        //         $or: [ { job_stages: 'Hired' }, { 'jobs.stage_name': 'Hired' } ]
-        //     };
-        // }
         // Example query: Find all documents
         const response = await ApiResponseCandidate.find(query);
         let candidates = []
@@ -111,16 +115,23 @@ async function getCandidateWithStatus(query, req) {
                 candidates.push({
                     start_date: res.join_date || filterDate,
                     name: res.name,
-                    job_name: filteredJobs[0].title
+                    job_name: filteredJobs[0].title,
+                    job_id: filteredJobs[0].job_id,
+                    locations: '',
+                    is_open: filteredJobs[0].is_open
                 })
             } else if (filteredJobs.length > 0) {
                 candidates.push({
                     start_date: res.join_date || filterDate,
                     name: res.name,
-                    job_name: filteredJobs[0].title
+                    job_name: filteredJobs[0].title,
+                    job_id: filteredJobs[0].job_id,
+                    locations: '',
+                    is_open: filteredJobs[0].is_open
                 })
             }
         }
+        await getJobList(query, candidates);
         return candidates
     } catch ( error ) {
         console.error('Error retrieving users:', error);
@@ -280,7 +291,7 @@ async function getDataRecruiter (request) {
             // Add name condition only if the name parameter is not null or undefined
            query = listQuery 
         }
-        const totalJobs = await getJobList(requestData, false)
+        const totalJobs = await getJobs(requestData, false)
         responseData.candidateHired = await getCandidateWithStatus(query, request)
         responseData.totalJobs = totalJobs.length
         const candidate = await getCandidate(query)
