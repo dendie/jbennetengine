@@ -40,17 +40,17 @@ cron.schedule('*/15 * * * *', async () => {
 // });
 
 router.get('/redis-start', async (req, res) => {
-    task.start();
+    // task.start();
     res.json({ message: 'Cron Job started' })
 })
 
 router.get('/redis-stop', async (req, res) => {
-    task.stop();
+    // task.stop();
     res.json({ message: 'Cron Job stop' })
 })
 
 router.get('/cron-job', async (req, res) => {
-    task.stop();
+    // task.stop();
     const response = await cronJobs()
     res.json(response)
 })
@@ -63,6 +63,9 @@ router.get('/recruiter', authenticateToken, async (req, res) => {
         const recruiter = await redisClient.get('recruiter');
         if (recruiter != null) {
             return res.json(JSON.parse(recruiter))
+        } else {
+            const response = await getDataRecruiter(req)
+            res.json(response)
         }
     }
 })

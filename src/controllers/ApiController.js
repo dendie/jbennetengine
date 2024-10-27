@@ -105,8 +105,15 @@ async function getCandidateWithStatus(query, req) {
             let filteredJobs = res.jobs.filter((job) => {
                 return job.stage_name === 'Hired'
             })
+
             if (filteredJobs.length > 0 && ((decoded === filteredJobs[0].client_company_name) || ((decoded === 'jbennett') ?? true)) ) {
                 let filterDate = filteredJobs.length > 0 ? filteredJobs[0].stage_moved.split('T')[0] : null;
+                candidates.push({
+                    start_date: res.join_date || filterDate,
+                    name: res.name,
+                    job_name: filteredJobs[0].title
+                })
+            } else if (filteredJobs.length > 0) {
                 candidates.push({
                     start_date: res.join_date || filterDate,
                     name: res.name,
@@ -134,7 +141,7 @@ async function getCounterList(request) {
         }
         if (request && request.isOpen && request.isOpen !== '') {
             // query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
-            request.isOpen.toLowerCase() === 'true' ? listQuery['jobs.is_open'] = true : listQuery['job_stages'] = 'Hired'
+            request.isOpen.toLowerCase() === 'true' || request.isOpen.toLowerCase() === 'open' ? listQuery['jobs.is_open'] = true : listQuery['job_stages'] = 'Hired'
         }
         if (request && request.client && request.client !== '') {
             listQuery['jobs.client_company_name'] = request.client
@@ -260,7 +267,7 @@ async function getDataRecruiter (request) {
         }
         if (requestData && requestData.isOpen && requestData.isOpen !== '') {
             // query['jobs.is_open'] = requestData.isOpen.toLowerCase() === 'true' ? true : false
-            requestData.isOpen.toLowerCase() === 'true' ? listQuery['jobs.is_open'] = true : listQuery['job_stages'] = 'Hired'
+            requestData.isOpen.toLowerCase() === 'true' || requestData.isOpen.toLowerCase() === 'open' ? listQuery['jobs.is_open'] = true : listQuery['job_stages'] = 'Hired'
         }
         if (requestData && requestData.client && requestData.client !== '') {
             listQuery['jobs.client_company_name'] = requestData.client
