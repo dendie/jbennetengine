@@ -55,9 +55,9 @@ router.get('/cron-job', async (req, res) => {
     res.json(response)
 })
 
-router.get('/recruiter', async (req, res) => {
+router.get('/recruiter', authenticateToken, async (req, res) => {
     if (Object.keys(req.query).length > 0) {
-        const response = await getDataRecruiter(req.query)
+        const response = await getDataRecruiter(req)
         res.json(response)
     } else {
         const recruiter = await redisClient.get('recruiter');
