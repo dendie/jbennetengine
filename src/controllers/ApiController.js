@@ -1,6 +1,7 @@
 const ApiResponseCandidate = require('../models/apiResponseCandidate');
 const ApiResponseJob = require('../models/apiResponseJob');
 const ApiResponseClient = require('../models/apiResponseClient');
+const ApiResponseClientAll = require('../models/apiResponseClientAll');
 const ApiResponseStage = require('../models/apiResponseStage');
 const ApiResponseLocation = require('../models/apiResponseLocations');
 const { callLongLatAPI } = require('../utils/jobsCall');
@@ -71,10 +72,24 @@ async function getClientList(request) {
         }
 
         const clone = JSON.parse(JSON.stringify(searchCondition));
-
         query = {
             ...query,
             ...clone
+        }
+
+        if (request.all === 'true' || request.all === true) {
+            const response = await ApiResponseClientAll.find(query).skip(skip).limit(limit);
+            const totalItems = await ApiResponseClientAll.find(query).countDocuments();
+            const client = (await response).map(item => {
+                return { id: item.client_id, name: item.name }
+            });
+            return {
+                page,
+                limit,
+                totalItems,
+                totalPages: Math.ceil(totalItems / limit),
+                client
+            };
         }
 
         // Example query: Find all documents
@@ -83,7 +98,7 @@ async function getClientList(request) {
             return { id: item.client_id, name: item.name }
         })
         // Get the total count of items in the collection
-        const totalItems = client.length;
+        const totalItems = await ApiResponseClient.find(query).countDocuments();
 
         return {
             page,
@@ -107,10 +122,10 @@ async function getCandidateWithStatus(query, req) {
         let candidates = []
         for (res of response) {
             let filteredJobs = res.jobs.filter((job) => {
-                return job.stage_name === 'Hired'
+                return (job.stage_name === 'Hired' && (job.client_company_name === query['jobs.client_company_name'])) || (job.stage_name === 'Hired' && ((decoded === job.name) || ((decoded === 'jbennett') ?? true)))
             })
 
-            if (filteredJobs.length > 0 && ((decoded === filteredJobs[0].client_company_name) || ((decoded === 'jbennett') ?? true)) ) {
+            if (filteredJobs.length > 0) {
                 let filterDate = filteredJobs.length > 0 ? filteredJobs[0].stage_moved.split('T')[0] : null;
                 candidates.push({
                     start_date: res.join_date || filterDate,

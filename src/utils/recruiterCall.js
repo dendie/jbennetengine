@@ -108,7 +108,6 @@ exports.getTotalProspectCount = async (limit = 100) => {
 
         page++;
     }
-    console.log(candidateList)
     return totalCount;
 }
 

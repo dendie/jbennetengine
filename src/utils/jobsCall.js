@@ -5,6 +5,7 @@ const ApiResponseJob = require('../models/apiResponseJob');
 const ApiResponseCandidate = require('../models/apiResponseCandidate');
 const ApiResponseUser = require('../models/apiResponseUser');
 const ApiResponseClient = require('../models/apiResponseClient');
+const ApiResponseClientAll = require('../models/apiResponseClientAll');
 const ApiResponseStage = require('../models/apiResponseStage');
 const ApiResponseLocation = require('../models/apiResponseLocations');
 
@@ -27,6 +28,10 @@ const callClientAPI = async (limit = 100, page = 1, accumulatedData = []) => {
             if (client.closed_jobs.length > 0 || client.open_jobs.length > 0) {
                 let formData = { client_id: client.id, name: client.name, locations: client.location.city, closed_jobs: client.closed_jobs, open_jobs: client.open_jobs }
                 const apiResponse = new ApiResponseClient(formData);
+                await apiResponse.save();
+            } else {
+                let formData = { client_id: client.id, name: client.name, locations: client.location.city, closed_jobs: client.closed_jobs, open_jobs: client.open_jobs }
+                const apiResponse = new ApiResponseClientAll(formData);
                 await apiResponse.save();
             }
         }
