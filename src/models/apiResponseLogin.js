@@ -17,6 +17,10 @@ const apiResponseLoginSchema = new mongoose.Schema({
         type: Array,
         required: true
     },
+    role: {
+        type: Object,
+        required: true
+    },
     token: {
         type: String,
         required: false

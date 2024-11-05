@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const ApiResponseAdmin = require('../models/apiResponseAdmin');
 const ApiResponseSendEmail = require('../models/apiResponseSendEmail');
+const ApiResponseLogin = require('../models/apiResponseLogin');
 
 async function getListUsers (req, res)
 {
@@ -35,15 +36,18 @@ async function getListUsers (req, res)
 
 async function storeLogin (request)
 {
-  const { user, email, password, client } = request.body;
+  const { user, email, password, client, role } = request.body;
   try {
       let dataUser = await ApiResponseAdmin.findOne({ email });
       if (dataUser) {
           return res.status(400).json({ msg: 'User already exists' });
       }
       const hashedPassword = await bcrypt.hash(password, 10)
-      const apiResponse = new ApiResponseAdmin({ user: user, email: email, password: hashedPassword, client: client });
+      const apiResponse = new ApiResponseAdmin({ user: user, email: email, password: hashedPassword, client: client, role: role });
+      const user = { user: user, password: hashedPassword, email: email, client: client, role: role };
+      const apiResponseLogin = new ApiResponseLogin(user);
       await apiResponse.save();
+      await apiResponseLogin.save();
       return { status: 201, message: 'User registered successfully' }
   } catch (error) {
       console.log(error);
@@ -73,10 +77,10 @@ async function updatePassword (request)
     try {
       const user = await User.findById(request.user.id);
   
-      const isMatch = await bcrypt.compare(currentPassword, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ msg: 'Current password is incorrect' });
-      }
+      // const isMatch = await bcrypt.compare(currentPassword, user.password);
+      // if (!isMatch) {
+      //   return res.status(400).json({ msg: 'Current password is incorrect' });
+      // }
   
       user.password = newPassword;
       await user.save();
@@ -220,4 +224,4 @@ async function updateEmailTo (request)
     }
 }
 
-module.exports = { getListUsers, storeLogin, deleteUser, getEmailTo, setEmailTo, updateEmailTo }
+module.exports = { getListUsers, storeLogin, deleteUser, getEmailTo, setEmailTo, updateEmailTo, updatePassword }

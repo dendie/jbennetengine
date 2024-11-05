@@ -7,14 +7,16 @@ const ApiResponseLogin = require('../models/apiResponseLogin');
 async function fetchLogin (request)
 {
     const user = await ApiResponseLogin.find({ user: request.body.user });
-    if (user == null) {
+    if (user.length === 0) {
         return { status: 400, message: 'Cannot find user' }
     }
     try {
         if(await bcrypt.compare(request.body.password, user[0].password)) {
-            const accessToken = jwt.sign(request.body.user, process.env.ACCESS_TOKEN_SECRET)
+            const accessToken = jwt.sign( {
+                username: user[0].username,
+                role: user[0].role
+              }, process.env.ACCESS_TOKEN_SECRET)
             const result = await user[0].updateOne({ $set: { token: accessToken }});
-            console.log('result: ' + result)
             if (result) {
                 return { message: 'Success', client: request.body.user === 'jbennett' ? ["[client_id: '0', name: 'JBennettRecruiting']"] : user[0].client, token: accessToken }
             } else {
