@@ -42,10 +42,11 @@ async function storeLogin (request)
       if (dataUser) {
           return res.status(400).json({ msg: 'User already exists' });
       }
-      const hashedPassword = await bcrypt.hash(password, 10)
-      const apiResponse = new ApiResponseAdmin({ user: user, email: email, password: hashedPassword, client: client, role: role });
-      const user = { user: user, password: hashedPassword, email: email, client: client, role: role };
-      const apiResponseLogin = new ApiResponseLogin(user);
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const formBody = { user: user, email: email, password: hashedPassword, client: client, role: role };
+      const apiResponse = new ApiResponseAdmin(formBody);
+      // const user = { user: user, password: hashedPassword, email: email, client: client, role: role };
+      const apiResponseLogin = new ApiResponseLogin(formBody);
       await apiResponse.save();
       await apiResponseLogin.save();
       return { status: 201, message: 'User registered successfully' }
