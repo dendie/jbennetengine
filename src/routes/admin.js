@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getListUsers, storeLogin, deleteUser, getEmailTo, setEmailTo, updateEmailTo, updatePassword } = require('../controllers/AdminController');
+const { getListUsers, storeLogin, deleteUser, getEmailTo, setEmailTo, updateEmailTo, updatePassword, updateRole } = require('../controllers/AdminController');
 
 // Get all users (protected route)
 router.get('/', async (req, res) => {
@@ -36,6 +36,11 @@ router.put('/update-email/:id', async (req, res) => {
 
 router.patch('/reset-password/:id', async (req, res) => {
     const response = await updatePassword(req)
+    res.send(response)
+})
+
+router.patch('/update-role/:id', async (req, res) => {
+    const response = await updateRole(req)
     res.send(response)
 })
 

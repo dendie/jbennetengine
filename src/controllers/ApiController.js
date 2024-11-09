@@ -117,12 +117,16 @@ async function getCandidateWithStatus(query, req) {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1];
         const decoded = jwt.decode(token);
+        const client = decoded.client[0];
+        const nameMatch = client.match(/name:\s*'([^']+)'/);
+
+        const clientName = nameMatch ? nameMatch[1] : null;
         // Example query: Find all documents
         const response = await ApiResponseCandidate.find(query);
         let candidates = []
         for (res of response) {
             let filteredJobs = res.jobs.filter((job) => {
-                return (job.stage_name === 'Hired' && (job.client_company_name === query['jobs.client_company_name'])) || (job.stage_name === 'Hired' && ((decoded.username === job.name) || ((decoded.username === 'jbennett') ?? true)))
+                return (job.stage_name === 'Hired' && (job.client_company_name === query['jobs.client_company_name'])) || (job.stage_name === 'Hired' && ((nameMatch === job.name) || ((nameMatch === 'jbennett') ?? true)))
             })
 
             if (filteredJobs.length > 0) {
@@ -168,25 +172,6 @@ async function getCounterList(request, req) {
 
         const clientName = nameMatch ? nameMatch[1] : null;
 
-        let query = {};
-        let listQuery = {}
-        if (request && request.jobs && request.jobs !== '') {
-            listQuery['jobs.name'] = request.jobs
-        }
-        if (request && request.isOpen && request.isOpen !== '') {
-            request.isOpen.toLowerCase() === 'true' || request.isOpen.toLowerCase() === 'open' ? listQuery['jobs.is_open'] = true : listQuery['jobs.is_open'] = false
-        }
-        if (request && request.client && request.client !== '') {
-            listQuery['jobs.client_company_name'] = request.client
-        }
-        if (request && Object.keys(request).length >= 2) {
-            query.$and = [
-                listQuery
-            ]
-        } else {
-            // Add name condition only if the name parameter is not null or undefined
-           query = listQuery 
-        }
         // Example query: Find all documents
         const response = await ApiResponseStage.find();
         const stages = [ ...response[0].stages, 'false' ]
@@ -195,13 +180,22 @@ async function getCounterList(request, req) {
         let totalRecruited = 0
         let totalShortList = 0
         for (const stage of stages) {
+            let query = { 
+                stage_name: stage.toString(),
+                client_company_name: clientName,
+            }
+            if (request && request.jobs && request.jobs !== '') {
+                query['name'] = request.jobs
+            }
+            if (request && request.isOpen && request.isOpen !== '') {
+                request.isOpen.toLowerCase() === 'true' || request.isOpen.toLowerCase() === 'open' ? query['is_open'] = true : query['is_open'] = false
+            }
+            console.log(query);
             let candidateResponse = await getCandidate({
                 jobs: {
                     $elemMatch: 
                         { 
-                            stage_name: stage.toString(),
-                            client_company_name: clientName,
-                            is_open: listQuery['jobs.is_open']
+                            ...query
                         }
                 }
             });

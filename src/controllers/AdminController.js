@@ -17,7 +17,7 @@ async function getListUsers (req, res)
 
     const searchCondition = searchQuery ? { $or: [{ user: { $regex: searchQuery.trim(), $options: 'i' } }, { email: { $regex: searchQuery.trim(), $options: 'i' } }, { 'client.name': { $regex: searchQuery.trim(), $options: 'i' } }] } : {};
     
-    const users = await ApiResponseAdmin.find(searchCondition).skip(skip).limit(limit);
+    const users = await ApiResponseLogin.find(searchCondition).skip(skip).limit(limit);
     // Get the total count of items in the collection
     const totalItems = users.length;
     // return users
@@ -38,13 +38,13 @@ async function storeLogin (request)
 {
   const { user, email, password, client, role } = request.body;
   try {
-      let dataUser = await ApiResponseAdmin.findOne({ email });
+      let dataUser = await ApiResponseLogin.findOne({ email });
       if (dataUser) {
           return res.status(400).json({ msg: 'User already exists' });
       }
       const hashedPassword = await bcrypt.hash(password, 10);
       const formBody = { user: user, email: email, password: hashedPassword, client: client, role: role };
-      const apiResponse = new ApiResponseAdmin(formBody);
+      const apiResponse = new ApiResponseLogin(formBody);
       // const user = { user: user, password: hashedPassword, email: email, client: client, role: role };
       const apiResponseLogin = new ApiResponseLogin(formBody);
       await apiResponse.save();
@@ -61,7 +61,7 @@ async function updateLogin (request)
     try {
         const hashedPassword = await bcrypt.hash(request.body.password, 10)
         const user = { user: request.body.user, password: hashedPassword, email: request.body.email, client: request.body.client }
-        const apiResponse = new ApiResponseAdmin(user);
+        const apiResponse = new ApiResponseLogin(user);
         await apiResponse.save();
         return { status: 201, message: 'Success' }
     } catch (error) {
@@ -73,25 +73,27 @@ async function updateLogin (request)
 // Update Password (Authenticated User)
 async function updatePassword (request)
 {
-    const { currentPassword, newPassword } = request.body;
-    
-    try {
-      const user = await User.findById(request.user.id);
+  const { currentPassword, newPassword } = request.body;
   
-      // const isMatch = await bcrypt.compare(currentPassword, user.password);
-      // if (!isMatch) {
-      //   return res.status(400).json({ msg: 'Current password is incorrect' });
-      // }
-  
-      user.password = newPassword;
-      await user.save();
-  
-    //   res.json({ msg: 'Password updated successfully' });
-      return { msg: 'Password updated successfully' };
-    } catch (error) {
-      console.error(error.message);
-      res.status(500).send('Server error');
+  try {
+    const user = await ApiResponseLogin.findById(request.params.id);
+    if (!user || user.length === 0) {
+      return { status: 400, message: 'Cannot find user' }
     }
+    // const isMatch = await bcrypt.compare(currentPassword, user.password);
+    // if (!isMatch) {
+    //   return res.status(400).json({ msg: 'Current password is incorrect' });
+    // }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+  //   res.json({ msg: 'Password updated successfully' });
+    return { status: 200, msg: 'Password updated successfully' };
+  } catch (error) {
+    console.error(error.message);
+    return { status: 500, msg: 'Server error' };
+  }
 };
   
   // Forgot Password
@@ -174,7 +176,7 @@ async function resetPassword (request)
 async function deleteUser (request)
 {
     try {
-        await ApiResponseAdmin.findByIdAndDelete(request.params.id);
+        await ApiResponseLogin.findByIdAndDelete(request.params.id);
         return { status: 200, message: 'User deleted successfully' }
     } catch (error) {
         console.log(error);
@@ -225,4 +227,24 @@ async function updateEmailTo (request)
     }
 }
 
-module.exports = { getListUsers, storeLogin, deleteUser, getEmailTo, setEmailTo, updateEmailTo, updatePassword }
+// Update Role (Authenticated User)
+async function updateRole (request)
+{
+  const { newRole } = request.body;
+  
+  try {
+    const user = await ApiResponseLogin.findById(request.params.id);
+    if (!user || user.length === 0) {
+      return { status: 400, message: 'Cannot find user' }
+    }
+    user.role = newRole;
+    await user.save();
+
+    return { status: 200, msg: 'Role updated successfully' };
+  } catch (error) {
+    console.error(error.message);
+    return { status: 500, msg: 'Server error' };
+  }
+};
+
+module.exports = { getListUsers, storeLogin, deleteUser, getEmailTo, setEmailTo, updateEmailTo, updatePassword, updateRole }
