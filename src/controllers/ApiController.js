@@ -122,7 +122,7 @@ async function getCandidateWithStatus(query, req) {
         let candidates = []
         for (res of response) {
             let filteredJobs = res.jobs.filter((job) => {
-                return (job.stage_name === 'Hired' && (job.client_company_name === query['jobs.client_company_name'])) || (job.stage_name === 'Hired' && ((decoded === job.name) || ((decoded === 'jbennett') ?? true)))
+                return (job.stage_name === 'Hired' && (job.client_company_name === query['jobs.client_company_name'])) || (job.stage_name === 'Hired' && ((decoded.username === job.name) || ((decoded.username === 'jbennett') ?? true)))
             })
 
             if (filteredJobs.length > 0) {
@@ -158,16 +158,23 @@ async function getCandidate (query) {
     return response
 }
 
-async function getCounterList(request) {
+async function getCounterList(request, req) {
     try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        const decoded = jwt.decode(token);
+        const client = decoded.client[0];
+        const nameMatch = client.match(/name:\s*'([^']+)'/);
+
+        const clientName = nameMatch ? nameMatch[1] : null;
+
         let query = {};
         let listQuery = {}
         if (request && request.jobs && request.jobs !== '') {
             listQuery['jobs.name'] = request.jobs
         }
         if (request && request.isOpen && request.isOpen !== '') {
-            // query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
-            request.isOpen.toLowerCase() === 'true' || request.isOpen.toLowerCase() === 'open' ? listQuery['jobs.is_open'] = true : listQuery['job_stages'] = 'Hired'
+            request.isOpen.toLowerCase() === 'true' || request.isOpen.toLowerCase() === 'open' ? listQuery['jobs.is_open'] = true : listQuery['jobs.is_open'] = false
         }
         if (request && request.client && request.client !== '') {
             listQuery['jobs.client_company_name'] = request.client
@@ -180,7 +187,6 @@ async function getCounterList(request) {
             // Add name condition only if the name parameter is not null or undefined
            query = listQuery 
         }
-
         // Example query: Find all documents
         const response = await ApiResponseStage.find();
         const stages = [ ...response[0].stages, 'false' ]
@@ -189,10 +195,19 @@ async function getCounterList(request) {
         let totalRecruited = 0
         let totalShortList = 0
         for (const stage of stages) {
-            let candidateResponse = await getCandidate({ $and: [ { $and: [{ ...query, 'jobs.stage_name': stage.toString() } ] } ] });
+            let candidateResponse = await getCandidate({
+                jobs: {
+                    $elemMatch: 
+                        { 
+                            stage_name: stage.toString(),
+                            client_company_name: clientName,
+                            is_open: listQuery['jobs.is_open']
+                        }
+                }
+            });
             if (stage === 'Hired') {
                 totalHired = candidateResponse.length           
-            } else if (stage === 'Client Interview' ||  stage === 'Offer' || stage === 'Shortlist Interview') {
+            } else if (stage === 'Client Interview' || stage === 'Offer' || stage === 'Shortlist Interview') {
                 totalShortList += candidateResponse.length
             } else if (stage === 'Recruited' || stage === 'Recruiting Call') {
                 totalRecruited += candidateResponse.length
@@ -311,7 +326,7 @@ async function getDataRecruiter (request) {
         responseData.totalJobs = totalJobs.length
         const candidate = await getCandidate(query)
         responseData.locations = await getLocations(candidate, totalJobs)
-        const counter = await getCounterList(requestData)
+        const counter = await getCounterList(requestData, request)
         responseData = {
             ...responseData,
             ...counter

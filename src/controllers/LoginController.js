@@ -10,12 +10,14 @@ async function fetchLogin (request)
     if (user.length === 0) {
         return { status: 400, message: 'Cannot find user' }
     }
+    
     try {
         if(await bcrypt.compare(request.body.password, user[0].password)) {
             const accessToken = jwt.sign( {
-                username: user[0].username,
+                username: user[0].user,
+                client: user[0].client,
                 role: user[0].role
-              }, process.env.ACCESS_TOKEN_SECRET)
+            }, process.env.ACCESS_TOKEN_SECRET)
             const result = await user[0].updateOne({ $set: { token: accessToken }});
             if (result) {
                 return { message: 'Success', client: request.body.user === 'jbennett' ? ["[client_id: '0', name: 'JBennettRecruiting']"] : user[0].client, token: accessToken }
