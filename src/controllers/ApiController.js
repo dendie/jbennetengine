@@ -27,16 +27,14 @@ async function getJobs (request) {
         let response
         let query = {};
         let listQuery = {}
-        if (request && request.jobs && request.jobs !== '') {
-            listQuery['name'] = request.jobs
+        if (request && request.name && request.name !== '') {
+            listQuery['name'] = request.name
         }
-        if (request && request.isOpen && request.isOpen !== '') {
-            // query['jobs.is_open'] = request.isOpen.toLowerCase() === 'true' ? true : false
-            // listQuery['is_open'] = request.isOpen.toLowerCase() === 'open' || request.isOpen.toLowerCase() === "true"
-            request.isOpen.toLowerCase() === 'true' || request.isOpen.toLowerCase() === 'open' ? listQuery['jobs.is_open'] = true : listQuery['job_stages'] = 'Hired'
+        if (request && request.is_open && request.is_open !== '') {
+            request.is_open.toLowerCase() === 'true' || request.is_open.toLowerCase() === 'open' ? listQuery['is_open'] = true : listQuery['is_open'] = false
         }
-        if (request && request.client && request.client !== '') {
-            listQuery['company.name'] = request.client
+        if (request && request.client_company_name && request.client_company_name !== '') {
+            listQuery['company.name'] = request.client_company_name
         }
         if (request && Object.keys(request).length >= 2) {
             query.$and = [
@@ -304,7 +302,7 @@ async function getDataRecruiter (request) {
                     }
             }
         };
-        const totalJobs = await getJobs(requestData, false)
+        const totalJobs = await getJobs(listQuery, false)
         responseData.candidateHired = await getCandidateWithStatus(query, request)
         responseData.totalJobs = totalJobs.length
         const candidate = await getCandidate(query)
