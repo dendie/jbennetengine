@@ -31,7 +31,7 @@ async function getJobs (request) {
             listQuery['name'] = request.name
         }
         if (request && request.is_open && request.is_open !== '') {
-            request.is_open.toLowerCase() === 'true' || request.is_open.toLowerCase() === 'open' ? listQuery['is_open'] = true : listQuery['is_open'] = false
+            listQuery['is_open'] = request.is_open
         }
         if (request && request.client_company_name && request.client_company_name !== '') {
             listQuery['company.name'] = request.client_company_name
@@ -112,7 +112,7 @@ async function getClientList(request) {
 
 async function getCandidateWithStatus(query, req) {
     try {
-        const clientName = getClientName(req);
+        const clientName = await getClientName(req);
         // Example query: Find all documents
         const response = await ApiResponseCandidate.find(query);
         let candidates = []
@@ -156,7 +156,7 @@ async function getCandidate (query) {
 
 async function getCounterList(request, req) {
     try {
-        const clientName = getClientName(req);
+        const clientName = await getClientName(req);
 
         // Example query: Find all documents
         const response = await ApiResponseStage.find();
@@ -283,7 +283,7 @@ async function getDataRecruiter (request) {
     try {
         let requestData = request.query;
 
-        const clientName = getClientName(request);
+        const clientName = await getClientName(request);
         let listQuery = {}
         if (clientName !== 'jbennett') {
             listQuery['client_company_name'] = clientName
