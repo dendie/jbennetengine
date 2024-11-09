@@ -114,19 +114,13 @@ async function getClientList(request) {
 
 async function getCandidateWithStatus(query, req) {
     try {
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1];
-        const decoded = jwt.decode(token);
-        const client = decoded.client[0];
-        const nameMatch = client.match(/name:\s*'([^']+)'/);
-
-        const clientName = nameMatch ? nameMatch[1] : null;
+        const clientName = getClientName(req);
         // Example query: Find all documents
         const response = await ApiResponseCandidate.find(query);
         let candidates = []
         for (res of response) {
             let filteredJobs = res.jobs.filter((job) => {
-                return (job.stage_name === 'Hired' && (job.client_company_name === query['jobs.client_company_name'])) || (job.stage_name === 'Hired' && ((nameMatch === job.name) || ((nameMatch === 'jbennett') ?? true)))
+                return (job.stage_name === 'Hired' && (job.client_company_name === clientName)) || (job.stage_name === 'Hired' && ((clientName === job.name) || ((clientName === 'jbennett') ?? true)))
             })
 
             if (filteredJobs.length > 0) {
@@ -164,13 +158,7 @@ async function getCandidate (query) {
 
 async function getCounterList(request, req) {
     try {
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1];
-        const decoded = jwt.decode(token);
-        const client = decoded.client[0];
-        const nameMatch = client.match(/name:\s*'([^']+)'/);
-
-        const clientName = nameMatch ? nameMatch[1] : null;
+        const clientName = getClientName(req);
 
         // Example query: Find all documents
         const response = await ApiResponseStage.find();
@@ -181,8 +169,10 @@ async function getCounterList(request, req) {
         let totalShortList = 0
         for (const stage of stages) {
             let query = { 
-                stage_name: stage.toString(),
-                client_company_name: clientName,
+                stage_name: stage.toString()
+            }
+            if (clientName !== 'jbennett') {
+                query['client_company_name'] = clientName
             }
             if (request && request.jobs && request.jobs !== '') {
                 query['name'] = request.jobs
@@ -190,7 +180,6 @@ async function getCounterList(request, req) {
             if (request && request.isOpen && request.isOpen !== '') {
                 request.isOpen.toLowerCase() === 'true' || request.isOpen.toLowerCase() === 'open' ? query['is_open'] = true : query['is_open'] = false
             }
-            console.log(query);
             let candidateResponse = await getCandidate({
                 jobs: {
                     $elemMatch: 
@@ -293,28 +282,28 @@ async function getLongLat (locationsData) {
 
 async function getDataRecruiter (request) {
     let responseData = {}
-    let requestData = request.query;
     try {
-        let query = {};
-        let listQuery = {};
+        let requestData = request.query;
+
+        const clientName = getClientName(request);
+        let listQuery = {}
+        if (clientName !== 'jbennett') {
+            listQuery['client_company_name'] = clientName
+        }
         if (requestData && requestData.jobs && requestData.jobs !== '') {
-            listQuery['jobs.name'] = requestData.jobs
+            listQuery['name'] = request.jobs
         }
         if (requestData && requestData.isOpen && requestData.isOpen !== '') {
-            // query['jobs.is_open'] = requestData.isOpen.toLowerCase() === 'true' ? true : false
-            requestData.isOpen.toLowerCase() === 'true' || requestData.isOpen.toLowerCase() === 'open' ? listQuery['jobs.is_open'] = true : listQuery['job_stages'] = 'Hired'
+            requestData.isOpen.toLowerCase() === 'true' || requestData.isOpen.toLowerCase() === 'open' ? listQuery['is_open'] = true : listQuery['is_open'] = false
         }
-        if (requestData && requestData.client && requestData.client !== '') {
-            listQuery['jobs.client_company_name'] = requestData.client
-        }
-        if (requestData && Object.keys(requestData).length >= 2) {
-            query.$and = [
-                listQuery
-            ]
-        } else {
-            // Add name condition only if the name parameter is not null or undefined
-           query = listQuery 
-        }
+        let query = {
+            jobs: {
+                $elemMatch: 
+                    { 
+                        ...listQuery
+                    }
+            }
+        };
         const totalJobs = await getJobs(requestData, false)
         responseData.candidateHired = await getCandidateWithStatus(query, request)
         responseData.totalJobs = totalJobs.length
@@ -329,6 +318,17 @@ async function getDataRecruiter (request) {
     } catch ( error ) {
         console.error('Error retrieving users:', error);
     }
+}
+
+function getClientName(req) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    const decoded = jwt.decode(token);
+    const client = decoded.client[0];
+    const nameMatch = client.match(/name:\s*'([^']+)'/);
+
+    const clientName = nameMatch ? nameMatch[1] : null;
+    return clientName;
 }
 
 module.exports = { getCandidateWithStatus, getClientList, getCounterList, getJobList, getDataRecruiter }
