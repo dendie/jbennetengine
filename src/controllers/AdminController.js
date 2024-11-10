@@ -14,13 +14,12 @@ async function getListUsers (req, res)
     const searchQuery = req.query.search || '';
 
     const skip = (page - 1) * limit; // Calculate the number of documents to skip
-
     const searchCondition = searchQuery ? { $or: [{ user: { $regex: searchQuery.trim(), $options: 'i' } }, { email: { $regex: searchQuery.trim(), $options: 'i' } }, { 'client.name': { $regex: searchQuery.trim(), $options: 'i' } }] } : {};
     
     const users = await ApiResponseLogin.find(searchCondition).skip(skip).limit(limit);
     // Get the total count of items in the collection
-    const totalItems = users.length;
-    // return users
+    const totalItems = await ApiResponseLogin.countDocuments(searchCondition);
+    
     return {
       page,
       limit,
@@ -73,17 +72,13 @@ async function updateLogin (request)
 // Update Password (Authenticated User)
 async function updatePassword (request)
 {
-  const { currentPassword, newPassword } = request.body;
+  const { newPassword } = request.body;
   
   try {
     const user = await ApiResponseLogin.findById(request.params.id);
     if (!user || user.length === 0) {
       return { status: 400, message: 'Cannot find user' }
     }
-    // const isMatch = await bcrypt.compare(currentPassword, user.password);
-    // if (!isMatch) {
-    //   return res.status(400).json({ msg: 'Current password is incorrect' });
-    // }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
