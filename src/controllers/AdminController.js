@@ -19,7 +19,7 @@ async function getListUsers (req, res)
     const users = await ApiResponseLogin.find(searchCondition).skip(skip).limit(limit);
     // Get the total count of items in the collection
     const totalItems = await ApiResponseLogin.countDocuments(searchCondition);
-    
+
     return {
       page,
       limit,
@@ -44,10 +44,7 @@ async function storeLogin (request)
       const hashedPassword = await bcrypt.hash(password, 10);
       const formBody = { user: user, email: email, password: hashedPassword, client: client, role: role };
       const apiResponse = new ApiResponseLogin(formBody);
-      // const user = { user: user, password: hashedPassword, email: email, client: client, role: role };
-      const apiResponseLogin = new ApiResponseLogin(formBody);
       await apiResponse.save();
-      await apiResponseLogin.save();
       return { status: 201, message: 'User registered successfully' }
   } catch (error) {
       console.log(error);

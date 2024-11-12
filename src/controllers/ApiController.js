@@ -322,11 +322,15 @@ function getClientName(req) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     const decoded = jwt.decode(token);
-    const client = decoded.client[0];
-    const nameMatch = client.match(/name:\s*'([^']+)'/);
+    if (decoded.client.length > 0) {
+        const client = decoded.client[0];
+        const nameMatch = client.match(/name:\s*'([^']+)'/);
 
-    const clientName = nameMatch ? nameMatch[1] : null;
-    return clientName;
+        const clientName = nameMatch ? nameMatch[1] : null;
+        return clientName;
+    }
+    return 'jbennett';
+    
 }
 
 module.exports = { getCandidateWithStatus, getClientList, getCounterList, getJobList, getDataRecruiter }

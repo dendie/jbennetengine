@@ -12,42 +12,42 @@ redisClient.on('error', (err) => {
     console.error('Redis error:', err);
 });
 
-// const task = cron.schedule('*/30 * * * *', async () => {
-//     console.log('Running Redis store');
-//     const response = await getDataRecruiter()
-//     redisClient.set('recruiter', JSON.stringify(response))
-//     console.log('Redis store completed');
-// });
+const task = cron.schedule('*/30 * * * *', async () => {
+    console.log('Running Redis store');
+    const response = await getDataRecruiter()
+    redisClient.set('recruiter', JSON.stringify(response))
+    console.log('Redis store completed');
+});
 
 
-// cron.schedule('*/15 * * * *', async () => {
-//     const recruiter = await redisClient.get('recruiter');
-//     if (recruiter != null) {
-//         task.stop();
-//     }
-// });
+cron.schedule('*/15 * * * *', async () => {
+    const recruiter = await redisClient.get('recruiter');
+    if (recruiter != null) {
+        task.stop();
+    }
+});
 
-// cron.schedule('0 0 */2 * *', async () => {
-//     console.log('Running Cron Job');
-//     await cronJobs()
-//     const recruiter = await redisClient.get('recruiter');
-//     if (recruiter != null) {
-//         task.start();
-//     } else {
-//         task.del('recruiter');
-//     }
-//     console.log('Cron Job completed');
-// });
+cron.schedule('0 0 */2 * *', async () => {
+    console.log('Running Cron Job');
+    // await cronJobs()
+    const recruiter = await redisClient.get('recruiter');
+    if (recruiter != null) {
+        task.start();
+    } else {
+        task.del('recruiter');
+    }
+    console.log('Cron Job completed');
+});
 
-// router.get('/redis-start', async (req, res) => {
-//     task.start();
-//     res.json({ message: 'Cron Job started' })
-// })
+router.get('/redis-start', async (req, res) => {
+    task.start();
+    res.json({ message: 'Cron Job started' })
+})
 
-// router.get('/redis-stop', async (req, res) => {
-//     task.stop();
-//     res.json({ message: 'Cron Job stop' })
-// })
+router.get('/redis-stop', async (req, res) => {
+    task.stop();
+    res.json({ message: 'Cron Job stop' })
+})
 
 // router.get('/cron-job', async (req, res) => {
 //     task.stop();
@@ -56,19 +56,20 @@ redisClient.on('error', (err) => {
 // })
 
 router.get('/recruiter', authenticateToken, async (req, res) => {
-    // if (Object.keys(req.query).length > 0) {
-    //     const response = await getDataRecruiter(req)
-    //     redisClient.set('recruiter', JSON.stringify(response))
-    //     res.json(response)
-    // } else {
-    //     const recruiter = await redisClient.get('recruiter');
-    //     if (recruiter != null) {
-    //         return res.json(JSON.parse(recruiter))
-    //     } else {
-    //         const response = await getDataRecruiter(req)
-    //         res.json(response)
-    //     }
-    // }
+    const clientName = await getClientName(req);
+    if (Object.keys(req.query).length > 0 && clientName !== 'jbennett') {
+        const response = await getDataRecruiter(req)
+        redisClient.set('recruiter', JSON.stringify(response))
+        res.json(response)
+    } else {
+        const recruiter = await redisClient.get('recruiter');
+        if (recruiter != null) {
+            return res.json(JSON.parse(recruiter))
+        } else {
+            const response = await getDataRecruiter(req)
+            res.json(response)
+        }
+    }
     const response = await getDataRecruiter(req)
     res.json(response)
 })
@@ -99,6 +100,17 @@ function authenticateToken(req, res, next) {
       req.user = user
       next()
     })
+}
+
+function getClientName(req) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    const decoded = jwt.decode(token);
+    const client = decoded.username;
+    // const nameMatch = client.match(/name:\s*'([^']+)'/);
+
+    // const clientName = nameMatch ? nameMatch[1] : null;
+    return client;
 }
 
 module.exports = router;
