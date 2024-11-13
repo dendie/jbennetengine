@@ -56,20 +56,20 @@ router.get('/redis-stop', async (req, res) => {
 // })
 
 router.get('/recruiter', authenticateToken, async (req, res) => {
-    const clientName = await getClientName(req);
-    if (Object.keys(req.query).length > 0 && clientName !== 'jbennett') {
-        const response = await getDataRecruiter(req)
-        redisClient.set('recruiter', JSON.stringify(response))
-        res.json(response)
-    } else {
-        const recruiter = await redisClient.get('recruiter');
-        if (recruiter != null) {
-            return res.json(JSON.parse(recruiter))
-        } else {
-            const response = await getDataRecruiter(req)
-            res.json(response)
-        }
-    }
+    // const clientName = await getClientName(req);
+    // if (Object.keys(req.query).length > 0 && clientName !== 'jbennett') {
+    //     const response = await getDataRecruiter(req)
+    //     redisClient.set('recruiter', JSON.stringify(response))
+    //     res.json(response)
+    // } else {
+    //     const recruiter = await redisClient.get('recruiter');
+    //     if (recruiter != null) {
+    //         return res.json(JSON.parse(recruiter))
+    //     } else {
+    //         const response = await getDataRecruiter(req)
+    //         res.json(response)
+    //     }
+    // }
     const response = await getDataRecruiter(req)
     res.json(response)
 })
