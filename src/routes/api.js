@@ -75,7 +75,7 @@ router.get('/recruiter', authenticateToken, async (req, res) => {
 })
 
 router.get('/job-list', authenticateToken, async (req, res) => {
-    res.json(await getJobList(req.query, false))
+    res.json(await getJobList(req, false))
 })
 
 router.get('/client-list', authenticateToken, async (req, res) => {
