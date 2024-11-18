@@ -12,6 +12,7 @@
     "mysql-migrations": "^1.0.7",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
+    "nodemailer": "^6.9.16",
     "redis": "^4.7.0",
     "request": "^2.79.0",
     "sequelize": "^6.37.3",
