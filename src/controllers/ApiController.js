@@ -9,14 +9,56 @@ const jwt = require('jsonwebtoken');
 
 async function getJobList(request, data = []) {
     try {
-        if (request && request.length > 0 && (request.isOpen.toLowerCase() === false || request.isOpen.toLowerCase() === 'placed')) {
-            let response = await data.map((item) => {
-                return { id: item.job_id, name: item.name, locations: item.locations, is_open: item.is_open }
-            })
-            return response;
-        } else {
-            return await getJobs(request);
+        const clientName = await getClientName(request);
+        const requestData = await request.query;
+        let listQuery = {}
+        if (clientName !== 'jbennett') {
+            listQuery['client_company_name'] = clientName
         }
+        if (requestData && requestData.jobs && requestData.jobs !== '') {
+            listQuery['name'] = request.jobs
+        }
+        if (requestData && requestData.isOpen && requestData.isOpen !== '') {
+            requestData.isOpen.toLowerCase() === 'true' || requestData.isOpen.toLowerCase() === 'open' ? listQuery['is_open'] = true : listQuery['is_open'] = false
+        }
+        let query = {
+            jobs: {
+                $elemMatch: 
+                    { 
+                        ...listQuery
+                    }
+            }
+        };
+        const response = await ApiResponseCandidate.find(query);
+        let jobs = [];
+        for (res of response) {
+            let filteredJobs = res.jobs.filter((job) => {
+                return ((clientName === job.client_company_name) || ((clientName === 'jbennett') ?? true))
+            })
+
+            if (filteredJobs.length > 0) {
+                const newObject = {
+                    name: filteredJobs[0].name,
+                    id: filteredJobs[0].job_id,
+                    locations: res.locations[0],
+                    is_open: filteredJobs[0].is_open
+                }
+                const set = new Set(jobs.map(obj => obj.id));
+                if (!set.has(newObject.id)) {
+                    jobs.push(newObject);
+                    set.add(newObject.id);
+                }
+            }
+        }
+        return jobs;
+        // if (request && request.length > 0 && (request.isOpen.toLowerCase() === false || request.isOpen.toLowerCase() === 'placed')) {
+        //     let response = await data.map((item) => {
+        //         return { id: item.job_id, name: item.name, locations: item.locations, is_open: item.is_open }
+        //     })
+        //     return response;
+        // } else {
+        //     return await getJobs(request);
+        // }
     } catch ( error ) {
         console.error('Error retrieving users:', error);
     }
@@ -318,10 +360,10 @@ async function getDataRecruiter (request) {
     }
 }
 
-function getClientName(req) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    const decoded = jwt.decode(token);
+async function getClientName(req) {
+    const authHeader = await req.headers['authorization'];
+    const token = await (authHeader && authHeader.split(' ')[1]);
+    const decoded = await jwt.decode(token);
     if (decoded.client.length > 0) {
         const client = decoded.client[0];
         const nameMatch = client.match(/name:\s*'([^']+)'/);

@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/apiResponseUserJB');
 const SendEmail = require('../models/apiResponseSendEmail');
-const sendEmail = require('../controllers/SendEmailController');
+// const sendEmail = require('../controllers/SendEmailController');
+const sendMail = require('../controllers/SendEmailGoogleController');
 
 // Create (POST) - Add a new user
 router.post('/', async (req, res) => {
@@ -10,8 +11,9 @@ router.post('/', async (req, res) => {
     const user = new User(req.body);
     const savedUser = await user.save();
     const sentEmail = await SendEmail.find();
-    const parametersEmail = await { ...req.body, sendTo: sentEmail[0].email[0] };
-    const isSent = await sendEmail(parametersEmail);
+    const parametersEmail = await { ...req.body, sendTo: sentEmail[0].email };
+    // const isSent = await sendEmail(parametersEmail);
+    const isSent = await sendMail(parametersEmail);
     console.log('Email is sent: ' + isSent);
     res.status(201).json(savedUser);
   } catch (error) {
