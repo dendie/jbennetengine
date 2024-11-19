@@ -102,15 +102,4 @@ function authenticateToken(req, res, next) {
     })
 }
 
-function getClientName(req) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    const decoded = jwt.decode(token);
-    const client = decoded.username;
-    // const nameMatch = client.match(/name:\s*'([^']+)'/);
-
-    // const clientName = nameMatch ? nameMatch[1] : null;
-    return client;
-}
-
 module.exports = router;

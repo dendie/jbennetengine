@@ -152,15 +152,16 @@ async function getClientList(request) {
     }
 }
 
-async function getCandidateWithStatus(query, req) {
+async function getCandidateWithStatus(query, req, clientName) {
     try {
-        const clientName = await getClientName(req);
+        // const clientName = await getClientName(req);
+        const client_name = clientName;
         // Example query: Find all documents
         const response = await ApiResponseCandidate.find(query);
         let candidates = []
         for (res of response) {
             let filteredJobs = res.jobs.filter((job) => {
-                return (job.stage_name === 'Hired' && (job.client_company_name === clientName)) || (job.stage_name === 'Hired' && ((clientName === job.name) || ((clientName === 'jbennett') ?? true)))
+                return (job.stage_name === 'Hired' && (job.client_company_name === client_name)) || (job.stage_name === 'Hired' && ((client_name === job.name) || ((client_name === 'jbennett') ?? true)))
             })
 
             if (filteredJobs.length > 0) {
@@ -331,7 +332,7 @@ async function getDataRecruiter (request) {
             listQuery['client_company_name'] = clientName
         }
         if (requestData && requestData.jobs && requestData.jobs !== '') {
-            listQuery['name'] = request.jobs
+            listQuery['name'] = requestData.jobs
         }
         if (requestData && requestData.isOpen && requestData.isOpen !== '') {
             requestData.isOpen.toLowerCase() === 'true' || requestData.isOpen.toLowerCase() === 'open' ? listQuery['is_open'] = true : listQuery['is_open'] = false
@@ -345,7 +346,7 @@ async function getDataRecruiter (request) {
             }
         };
         const totalJobs = await getJobs(listQuery, false)
-        responseData.candidateHired = await getCandidateWithStatus(query, request)
+        responseData.candidateHired = await getCandidateWithStatus(query, request, clientName)
         responseData.totalJobs = totalJobs.length
         const candidate = await getCandidate(query)
         responseData.locations = await getLocations(candidate, totalJobs)
