@@ -7,9 +7,9 @@ const ApiResponseLocation = require('../models/apiResponseLocations');
 const { callLongLatAPI } = require('../utils/jobsCall');
 const jwt = require('jsonwebtoken');
 
-async function getJobList(request, data = []) {
+async function getJobList(request, data = [], client) {
     try {
-        const clientName = await getClientName(request);
+        const clientName = client;
         const requestData = await request.query;
         let listQuery = {}
         if (clientName !== 'jbennett') {
@@ -185,7 +185,7 @@ async function getCandidateWithStatus(query, req, clientName) {
                 })
             }
         }
-        await getJobList(query, candidates);
+        await getJobList(query, candidates, clientName);
         return candidates
     } catch ( error ) {
         console.error('Error retrieving users:', error);
@@ -197,9 +197,9 @@ async function getCandidate (query) {
     return response
 }
 
-async function getCounterList(request, req) {
+async function getCounterList(request, req, client) {
     try {
-        const clientName = await getClientName(req);
+        const clientName = client;
 
         // Example query: Find all documents
         const response = await ApiResponseStage.find();
@@ -321,12 +321,12 @@ async function getLongLat (locationsData) {
     return locations
 }
 
-async function getDataRecruiter (request) {
+async function getDataRecruiter (request, client) {
     let responseData = {}
     try {
         let requestData = request.query;
 
-        const clientName = await getClientName(request);
+        const clientName = await client;
         let listQuery = {}
         if (clientName !== 'jbennett') {
             listQuery['client_company_name'] = clientName
@@ -350,7 +350,7 @@ async function getDataRecruiter (request) {
         responseData.totalJobs = totalJobs.length
         const candidate = await getCandidate(query)
         responseData.locations = await getLocations(candidate, totalJobs)
-        const counter = await getCounterList(requestData, request)
+        const counter = await getCounterList(requestData, request, clientName)
         responseData = {
             ...responseData,
             ...counter
@@ -359,21 +359,6 @@ async function getDataRecruiter (request) {
     } catch ( error ) {
         console.error('Error retrieving users:', error);
     }
-}
-
-async function getClientName(req) {
-    const authHeader = await req.headers['authorization'];
-    const token = await (authHeader && authHeader.split(' ')[1]);
-    const decoded = await jwt.decode(token);
-    if (decoded.client.length > 0) {
-        const client = decoded.client[0];
-        const nameMatch = client.match(/name:\s*'([^']+)'/);
-
-        const clientName = nameMatch ? nameMatch[1] : null;
-        return clientName;
-    }
-    return 'jbennett';
-    
 }
 
 module.exports = { getCandidateWithStatus, getClientList, getCounterList, getJobList, getDataRecruiter }
