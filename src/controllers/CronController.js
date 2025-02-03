@@ -10,11 +10,11 @@ const { updateLocationsCandidate, updateLocationsJobs } = require('../utils/recr
 
 async function cronJobs () {
     try {
-        // const resultCandidate = await ApiResponseCandidate.deleteMany({});
-        // console.log(`Cleared ${resultCandidate.deletedCount} document(s)`);
+        const resultCandidate = await ApiResponseCandidate.deleteMany({});
+        console.log(`Cleared ${resultCandidate.deletedCount} document(s)`);
 
-        // const resultJob = await ApiResponseJob.deleteMany({});
-        // console.log(`Cleared ${resultJob.deletedCount} document(s)`);
+        const resultJob = await ApiResponseJob.deleteMany({});
+        console.log(`Cleared ${resultJob.deletedCount} document(s)`);
 
         const resultClient = await ApiResponseClient.deleteMany({});
         console.log(`Cleared ${resultClient.deletedCount} document(s)`);
@@ -31,14 +31,14 @@ async function cronJobs () {
         // const resultLocation = await ApiResponseLocations.deleteMany({});
         // console.log(`Cleared ${resultLocation.deletedCount} document(s)`);
 
-        // await callJobsAPI()
+        await callJobsAPI()
         await callClientAPI()
-        // await callCandidateAPI()
+        await callCandidateAPI()
         // await callUserAPI()
         // await callStageAPI()
         // await callLocationAPI()
-        // await updateLocationsCandidate()
-        // await updateLocationsJobs()
+        await updateLocationsCandidate()
+        await updateLocationsJobs()
         console.log('SUCCESS')
         return { message: 'SUCCESS' }
     } catch (err) {

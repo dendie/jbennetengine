@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken');
 
 async function getJobList(request, data = [], client) {
     try {
-        const clientName = client;
+        const clientName = request.clientName;
         const requestData = await request.query;
         let listQuery = {}
         if (clientName !== 'jbennett') {
@@ -158,6 +158,7 @@ async function getCandidateWithStatus(query, req, clientName) {
         const client_name = clientName;
         // Example query: Find all documents
         const response = await ApiResponseCandidate.find(query);
+        console.log(response);
         let candidates = []
         for (res of response) {
             let filteredJobs = res.jobs.filter((job) => {
