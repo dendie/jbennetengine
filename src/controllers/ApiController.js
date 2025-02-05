@@ -355,7 +355,7 @@ async function getDataRecruiter (request, client) {
         const candidate = await getCandidate(query)
         responseData.locations = await getLocations(candidate, totalJobs)
         const counter = await getCounterList(requestData, request, clientName)
-        responseData.totalJobs = await requestData.isOpen.toLowerCase() === 'placed' || requestData.isOpen.toLowerCase() === 'false' ? counter.totalHired : totalJobs.length
+        responseData.totalJobs = await (requestData && requestData.isOpen && requestData.isOpen !== '' && (requestData.isOpen.toLowerCase() === 'placed' || requestData.isOpen.toLowerCase() === 'false')) ? counter.totalHired : totalJobs.length
         responseData = {
             ...responseData,
             ...counter
