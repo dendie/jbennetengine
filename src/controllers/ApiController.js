@@ -29,10 +29,15 @@ async function getJobList(request, data = [], client) {
                     }
             }
         };
+        
         const response = await ApiResponseCandidate.find(query);
         let jobs = [];
         for (res of response) {
             let filteredJobs = res.jobs.filter((job) => {
+                // if (clientName === job.client_company_name) {
+                //     return clientName === job.client_company_name
+                // }
+                // return (clientName === 'jbennett') ?? true
                 return ((clientName === job.client_company_name) || ((clientName === 'jbennett') ?? true))
             })
 
@@ -158,7 +163,6 @@ async function getCandidateWithStatus(query, req, clientName) {
         const client_name = clientName;
         // Example query: Find all documents
         const response = await ApiResponseCandidate.find(query);
-        console.log(response);
         let candidates = []
         for (res of response) {
             let filteredJobs = res.jobs.filter((job) => {
@@ -348,10 +352,10 @@ async function getDataRecruiter (request, client) {
         };
         const totalJobs = await getJobs(listQuery, false)
         responseData.candidateHired = await getCandidateWithStatus(query, request, clientName)
-        responseData.totalJobs = totalJobs.length
         const candidate = await getCandidate(query)
         responseData.locations = await getLocations(candidate, totalJobs)
         const counter = await getCounterList(requestData, request, clientName)
+        responseData.totalJobs = await requestData.isOpen.toLowerCase() === 'placed' || requestData.isOpen.toLowerCase() === 'false' ? counter.totalHired : totalJobs.length
         responseData = {
             ...responseData,
             ...counter
