@@ -34,11 +34,11 @@ async function getJobList(request, data = [], client) {
         let jobs = [];
         for (res of response) {
             let filteredJobs = res.jobs.filter((job) => {
-                // if (clientName === job.client_company_name) {
-                //     return clientName === job.client_company_name
-                // }
-                // return (clientName === 'jbennett') ?? true
-                return ((clientName === job.client_company_name) || ((clientName === 'jbennett') ?? true))
+                if (clientName === job.client_company_name) {
+                    return clientName === job.client_company_name
+                }
+                return (clientName === 'jbennett') ?? true
+                // return ((clientName === job.client_company_name) || ((clientName === 'jbennett') ?? true))
             })
 
             if (filteredJobs.length > 0) {
