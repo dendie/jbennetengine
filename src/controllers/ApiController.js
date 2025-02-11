@@ -340,7 +340,7 @@ async function getDataRecruiter (request, client) {
             listQuery['name'] = requestData.jobs
         }
         if (requestData && requestData.isOpen && requestData.isOpen !== '') {
-            requestData.isOpen.toLowerCase() === 'true' || requestData.isOpen.toLowerCase() === 'open' ? listQuery['is_open'] = true : listQuery['is_open'] = false
+            requestData?.isOpen === 'true' ? listQuery['is_open'] = true : listQuery['is_open'] = false
         }
         let query = {
             jobs: {
@@ -355,7 +355,7 @@ async function getDataRecruiter (request, client) {
         const candidate = await getCandidate(query)
         responseData.locations = await getLocations(candidate, totalJobs)
         const counter = await getCounterList(requestData, request, clientName)
-        responseData.totalJobs = await (requestData && requestData.isOpen && requestData.isOpen !== '' && (requestData.isOpen.toLowerCase() === 'placed' || requestData.isOpen.toLowerCase() === 'false')) ? counter.totalHired : totalJobs.length
+        responseData.totalJobs = await requestData?.isOpen === 'false' ? counter.totalHired : totalJobs.length
         responseData = {
             ...responseData,
             ...counter
